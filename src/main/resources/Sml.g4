@@ -4,17 +4,13 @@ content: meta? node;
 
 meta: 'sml' attribute;
 
-node: nodeName (attribute | value | attribute value);
+node: NOT_KEYWORD_AND_WHITESPACE (attribute | value | attribute value);
 
 attribute: '(' pair* ')';
 
-nodeName: NOT_KEYWORD_AND_WHITESPACE;
+pair: NOT_KEYWORD_AND_WHITESPACE '=' NODE_ATTRIBUTE_VALUE;
 
-attributeName: NOT_KEYWORD_AND_WHITESPACE;
-
-pair: attributeName '=' NODE_ATTRIBUTE_VALUE;
-
-value: '{' (node | NODE_VALUE)* '}';
+value: '{' (NODE_VALUE | node)* '}';
 
 LINE_COMMENT: '//' .*? ('\n'|EOF) -> skip ;
 BLOCK_COMMENT: '/*' .*? '*/' -> skip ; // nesting comments allowed
