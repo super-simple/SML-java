@@ -2,7 +2,8 @@ package org.ss.smljava.test.basic;
 
 import org.junit.jupiter.api.Test;
 import org.ss.smljava.Sml;
-import org.ss.smljava.antlr.SmlParser;
+import org.ss.smljava.antlrgenerate.SmlLexer;
+import org.ss.smljava.antlrgenerate.SmlParser;
 import org.ss.smljava.util.IOs;
 
 import java.io.IOException;
@@ -10,7 +11,21 @@ import java.io.InputStream;
 
 public class SimpleTest1 {
     @Test
-    void test1() throws IOException {
+    void testLexer() throws IOException {
+        InputStream inputStream = null;
+        SmlLexer lexer;
+        try {
+            inputStream = SimpleTest1.class.getResourceAsStream("/basic/sample.sml");
+            String source = IOs.toString(inputStream);
+            lexer = Sml.getLexer(source);
+        } finally {
+            inputStream.close();
+        }
+        System.out.println(lexer.getAllTokens());
+    }
+
+    @Test
+    void testParser() throws IOException {
         InputStream inputStream = null;
         SmlParser parser;
         try {
@@ -20,7 +35,7 @@ public class SimpleTest1 {
         } finally {
             inputStream.close();
         }
-        SmlParser.BodyContext body = parser.body();
-        System.out.println(body);
+        SmlParser.ContentContext content = parser.content();
+        System.out.println(content.getText());
     }
 }

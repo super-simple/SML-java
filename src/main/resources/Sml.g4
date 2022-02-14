@@ -1,30 +1,29 @@
 grammar Sml;
 
-body: meta? data;
+content: meta? node;
 
 meta: 'sml' attribute;
-
-data: node*;
 
 node: NODE_NAME (attribute | value | attribute value);
 
 attribute: LEFT_PARENTHESIS pair* RIGHT_PARENTHESIS;
 
-pair: NODE_NAME '=' NODE_ATTRIBUTE_VALUE;
+pair: ATTRIBUTE_NAME '=' NODE_ATTRIBUTE_VALUE;
 
-value: LEFT_BRACE node* RIGHT_BRACE;
+value: LEFT_BRACE (node* | NODE_VALUE?) RIGHT_BRACE;
 
-NODE_NAME: ~( '`' | '"' | '\'' | '(' | ')' | '{' | '}' )+;
-
+LINE_COMMENT: '//' .*? ('\n'|EOF) -> skip ;
+BLOCK_COMMENT: '/*' .*? '*/' -> skip ; // nesting comments allowed
+WS: [ \n\r\t\u000B\u000C\u0000]+ -> skip;
+NODE_NAME: NOT_KEYWORD_AND_WHITESPACE;
+ATTRIBUTE_NAME: NOT_KEYWORD_AND_WHITESPACE;
+NODE_VALUE: NOT_KEYWORD | '`' .*? '`';
 NODE_ATTRIBUTE_VALUE: '"' .*? '"' | '\'' .*? '\'';
-
 LEFT_PARENTHESIS: '(';
 RIGHT_PARENTHESIS: ')';
 LEFT_BRACE: '{';
 RIGHT_BRACE: '}';
-
-WS : [ \n\r\t\u000B\u000C\u0000]+   -> channel(HIDDEN) ;
-
-BLOCK_COMMENT : '/*' .*? '*/'   -> channel(HIDDEN) ; // nesting comments allowed
-
-LINE_COMMENT : '//' .*? ('\n'|EOF)  -> channel(HIDDEN) ;
+fragment
+NOT_KEYWORD_AND_WHITESPACE: ~('`' | '"' | '\'' | '(' | ')' | '{' | '}' | '=' | ' ' | '\n' | '\r' | '\t' | '\u000B' | '\u000C' | '\u0000' )+;
+fragment
+NOT_KEYWORD: ~('`' | '"' | '\'' | '(' | ')' | '{' | '}' | '=' )+;
