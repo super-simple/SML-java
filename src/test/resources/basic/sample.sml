@@ -3,10 +3,10 @@
     body{
         //h1 只包含值
         h1{
-            hello document
+            hello h1
         }
         h2{
-            hello document
+            hello h2
         }
     }
 }
