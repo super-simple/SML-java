@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.ss.smljava.antlrgenerate.SmlLexer;
 import org.ss.smljava.antlrgenerate.SmlParser;
-import org.ss.smljava.parse.SmlListener;
+import org.ss.smljava.parse.SmlParserListener;
 
 public class Sml {
     public static SmlLexer getLexer(String source) {
@@ -20,7 +20,7 @@ public class Sml {
         SmlLexer lexer = new SmlLexer(charStream);
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         SmlParser smlParser = new SmlParser(tokenStream);
-        smlParser.addParseListener(new SmlListener());
+        smlParser.addParseListener(new SmlParserListener());
         smlParser.getInterpreter().setPredictionMode(PredictionMode.LL_EXACT_AMBIG_DETECTION);
         return smlParser;
     }

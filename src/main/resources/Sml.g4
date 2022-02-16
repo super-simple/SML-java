@@ -4,19 +4,34 @@ content: meta? node;
 
 meta: 'sml' attribute;
 
-node: NOT_KEYWORD_AND_WHITESPACE (attribute | value | attribute value);
+node: NOT_KEYWORD (attribute | nodeBody | attribute nodeBody);
 
-attribute: '(' pair* ')';
+attribute: LEFT_PARENTHESIS pair* RIGHT_PARENTHESIS;
 
-pair: NOT_KEYWORD_AND_WHITESPACE '=' NODE_ATTRIBUTE_VALUE;
+pair: NOT_KEYWORD EQUAL (DOUBLE_QUOTE_STRING | SINGLE_QUOTE_STRING);
 
-value: '{' (NODE_VALUE | node)* '}';
+nodeBody: LEFT_BRACE (nodeSimpleValue | node)* RIGHT_BRACE;
 
-LINE_COMMENT: '//' .*? ('\n'|EOF) -> skip ;
-BLOCK_COMMENT: '/*' .*? '*/' -> skip ; // nesting comments allowed
-WS: [ \n\r\t\u000B\u000C\u0000]+ -> skip;
-NOT_KEYWORD_AND_WHITESPACE: [a-zA-Z0-9]+;
-NODE_VALUE: NOT_KEYWORD | '`' .*? '`';
-NODE_ATTRIBUTE_VALUE: '"' .*? '"' | '\'' .*? '\'';
+nodeSimpleValue: NOT_KEYWORD+ | BACK_QUOTE_STRING;
+
+LINE_COMMENT: '//' .*? ('\n'|EOF) -> skip;
+BLOCK_COMMENT: '/*' .*? '*/' -> skip;
+WHITE_SPACE: [ \n\r\t\u000B\u000C\u0000]+ -> channel(HIDDEN);
+
+BACK_QUOTE_STRING: '`' .*? '`';
+DOUBLE_QUOTE_STRING: '"' .*? '"';
+SINGLE_QUOTE_STRING: '\'' .*? '\'';
+LEFT_PARENTHESIS: '(';
+RIGHT_PARENTHESIS: ')';
+LEFT_BRACE: '{';
+RIGHT_BRACE: '}';
+EQUAL: '=';
+
+NOT_KEYWORD: ([a-zA-Z0-9] | ESCAPE_CHAR | Unicode_CHAR)+;
 fragment
-NOT_KEYWORD: [a-zA-Z0-9]+;
+ESCAPE_CHAR: '\\' [\\btnfr`"'(){}=s];
+fragment
+Unicode_CHAR: '\\u' Hex_Digit Hex_Digit Hex_Digit Hex_Digit;
+
+fragment
+Hex_Digit: [0-9a-fA-F];
