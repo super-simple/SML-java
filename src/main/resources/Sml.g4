@@ -27,9 +27,10 @@ LEFT_BRACE: '{';
 RIGHT_BRACE: '}';
 EQUAL: '=';
 
-NOT_KEYWORD: ([a-zA-Z0-9] | ESCAPE_CHAR | Unicode_CHAR)+;
+// no ( ) { }
+NOT_KEYWORD: (ESCAPE_CHAR | [!-'] | [*-z] | [|~] | Unicode_CHAR)+;
 fragment
-ESCAPE_CHAR: '\\' [\\btnfr`"'(){}=s];
+ESCAPE_CHAR: '\\' [\\bfnrt(){}s];
 fragment
 Unicode_CHAR: '\\u' Hex_Digit Hex_Digit Hex_Digit Hex_Digit;
 
