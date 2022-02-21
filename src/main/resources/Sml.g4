@@ -28,7 +28,7 @@ RIGHT_BRACE: '}';
 EQUAL: '=';
 
 // no ( ) { }
-NOT_KEYWORD: (ESCAPE_CHAR | [!-'] | [*-z] | [|~] | Unicode_CHAR)+;
+NOT_KEYWORD: (ESCAPE_CHAR | [!-'*-z|~] | Unicode_CHAR)+;
 fragment
 ESCAPE_CHAR: '\\' [\\bfnrt(){}s];
 fragment
