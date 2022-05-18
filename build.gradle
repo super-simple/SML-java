@@ -16,7 +16,6 @@ repositories {
     maven { url 'https://maven.aliyun.com/repository/public' }
 }
 dependencies {
-    api group: 'org.antlr', name: 'antlr4-runtime', version: '4.9.3'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 }
