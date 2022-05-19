@@ -39,6 +39,9 @@ public class SmlParser {
             }
             sb.append(c);
         }
+        if (i == size) {
+            throw new SmlParseException("illegal context");
+        }
         String str = sb.toString();
         sb.delete(0, sb.length());
         index = index + (i - 1);
