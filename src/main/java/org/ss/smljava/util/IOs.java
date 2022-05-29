@@ -6,10 +6,6 @@ import java.nio.charset.StandardCharsets;
 
 public class IOs {
 
-    public static String toString(InputStream inputStream) {
-        return toString(inputStream, StandardCharsets.UTF_8);
-    }
-
     public static String toString(InputStream inputStream, Charset charset) {
         BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(8192);
