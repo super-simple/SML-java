@@ -26,25 +26,23 @@ public class SmlParser {
         if (sml.compareTo("sml") != 0) {
             throw new SmlParseException("header name is not `sml`");
         }
-
     }
 
     private String exceptNodeName(String documentStr, int size, MutableInt indexInt, StringBuilder sb) {
         int index = indexInt.getValue();
-        int i;
-        for (i = 0; i < size; i++) {
+        for (; index < size; index++) {
             char c = documentStr.charAt(index);
+
             if (Character.isWhitespace(c) && sb.length() != 0) {
                 break;
             }
             sb.append(c);
         }
-        if (i == size) {
+        if (index == size) {
             throw new SmlParseException("illegal context");
         }
         String str = sb.toString();
         sb.delete(0, sb.length());
-        index = index + (i - 1);
         indexInt.setValue(index);
         return str;
     }
