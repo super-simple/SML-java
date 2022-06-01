@@ -3,8 +3,17 @@ package org.ss.smljava.model;
 import java.util.List;
 
 public class SmlNode {
+    private String name;
     private SmlAttribute attribute;
     private List<SmlElement> elementList;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public SmlAttribute getAttribute() {
         return attribute;

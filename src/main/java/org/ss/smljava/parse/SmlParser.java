@@ -2,11 +2,9 @@ package org.ss.smljava.parse;
 
 import org.ss.smljava.bo.MutableInt;
 import org.ss.smljava.exceptionclz.SmlParseException;
-import org.ss.smljava.model.SmlAttribute;
-import org.ss.smljava.model.SmlAttributePair;
-import org.ss.smljava.model.SmlDocument;
-import org.ss.smljava.model.SmlNode;
+import org.ss.smljava.model.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.ss.smljava.parse.SmlDelimiter.*;
@@ -25,6 +23,7 @@ public class SmlParser {
         StringBuilder sb = new StringBuilder();
         MutableInt indexInt = new MutableInt(0);
         parseHeader(documentStr, size, indexInt, sb, smlDocument);
+        parseBody(documentStr, size, indexInt, sb, smlDocument);
         return smlDocument;
     }
 
@@ -34,10 +33,13 @@ public class SmlParser {
             throw new SmlParseException("header name is not `sml`");
         }
         SmlNode smlNode = new SmlNode();
-        SmlAttribute smlAttribute = exceptAttribute(documentStr, size, indexInt, sb);
-        if (smlAttribute != null) {
-            smlNode.setAttribute(smlAttribute);
+        List<SmlAttributePair> attributePairList = exceptAttribute(documentStr, size, indexInt, sb);
+        if (attributePairList != null) {
+            SmlAttribute attribute = new SmlAttribute();
+            attribute.setPairList(attributePairList);
+            smlNode.setAttribute(attribute);
         }
+        smlNode.setName(sml);
         smlDocument.setSml(smlNode);
     }
 
@@ -64,7 +66,7 @@ public class SmlParser {
         return str;
     }
 
-    private SmlAttribute exceptAttribute(String documentStr, int size, MutableInt indexInt, StringBuilder sb) {
+    private List<SmlAttributePair> exceptAttribute(String documentStr, int size, MutableInt indexInt, StringBuilder sb) {
         int index = indexInt.getValue();
         //find (
         for (; index < size; index++) {
@@ -92,11 +94,13 @@ public class SmlParser {
                         break;
                     }
                 } else {
-                    count++;
                     sb.append(c);
+                    count++;
                 }
             }
-            String attributeName = sb.toString();
+            String pairName = sb.toString();
+            sb.delete(0, count);
+            count = 0;
             // find equal
             for (; index < size; index++) {
                 char c = documentStr.charAt(index);
@@ -107,7 +111,7 @@ public class SmlParser {
                     break;
                 }
             }
-            // find attribute value
+            // find attribute value "
             for (; index < size; index++) {
                 char c = documentStr.charAt(index);
                 if (c == RIGHT_PARENTHESIS) {
@@ -117,8 +121,50 @@ public class SmlParser {
                     break;
                 }
             }
+            // find attribute value context
+            for (; index < size; index++) {
+                char c = documentStr.charAt(index);
+                if (c == DOUBLE_QUOTE) {
+                    break;
+                }
+                sb.append(c);
+                count++;
+            }
+            String pairValue = sb.toString();
+            SmlAttributePair smlAttributePair = new SmlAttributePair();
+            smlAttributePair.setName(pairName);
+            smlAttributePair.setValue(pairValue);
+            if (pairList == null) {
+                pairList = new ArrayList<>();
+            }
+            pairList.add(smlAttributePair);
         }
+        indexInt.setValue(index);
+        return pairList;
+    }
 
+    private void parseBody(String documentStr, int size, MutableInt indexInt, StringBuilder sb, SmlDocument smlDocument) {
+        String nodeName = exceptNodeName(documentStr, size, indexInt, sb);
+        List<SmlAttributePair> attributePairList = exceptAttribute(documentStr, size, indexInt, sb);
+        int index = indexInt.getValue();
+        for (; index < size; index++) {
+            char c = documentStr.charAt(index);
+            if (c == LEFT_BRACE) {
+                break;
+            }
+            if (Character.isWhitespace(c)) {
+                continue;
+            }
+        }
+        SmlNode bodyRootNode = new SmlNode();
+        if (attributePairList!=null){
+
+        }
+    }
+
+    private SmlElement parseNode(String documentStr, int size, MutableInt indexInt, StringBuilder sb, SmlDocument smlDocument) {
+        int index = indexInt.getValue();
+        int count = 0;
         return null;
     }
 
