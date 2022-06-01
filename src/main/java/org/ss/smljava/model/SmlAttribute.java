@@ -1,22 +1,15 @@
 package org.ss.smljava.model;
 
+import java.util.List;
+
 public class SmlAttribute {
-    private String name;
-    private String value;
+    private List<SmlAttributePair> pairList;
 
-    public String getName() {
-        return name;
+    public List<SmlAttributePair> getPairList() {
+        return pairList;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
+    public void setPairList(List<SmlAttributePair> pairList) {
+        this.pairList = pairList;
     }
 }
