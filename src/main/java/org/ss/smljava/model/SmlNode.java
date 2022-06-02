@@ -4,7 +4,7 @@ import java.util.List;
 
 public class SmlNode {
     private String name;
-    private SmlAttribute attribute;
+    private List<SmlAttributePair> pairList;
     private List<SmlElement> elementList;
 
     public String getName() {
@@ -15,12 +15,12 @@ public class SmlNode {
         this.name = name;
     }
 
-    public SmlAttribute getAttribute() {
-        return attribute;
+    public List<SmlAttributePair> getPairList() {
+        return pairList;
     }
 
-    public void setAttribute(SmlAttribute attribute) {
-        this.attribute = attribute;
+    public void setPairList(List<SmlAttributePair> pairList) {
+        this.pairList = pairList;
     }
 
     public List<SmlElement> getElementList() {
