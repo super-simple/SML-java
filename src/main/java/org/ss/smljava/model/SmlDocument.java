@@ -1,14 +1,14 @@
 package org.ss.smljava.model;
 
 public class SmlDocument {
-    private SmlNode sml;
+    private SmlHeader sml;
     private SmlNode root;
 
-    public SmlNode getSml() {
+    public SmlHeader getSml() {
         return sml;
     }
 
-    public void setSml(SmlNode sml) {
+    public void setSml(SmlHeader sml) {
         this.sml = sml;
     }
 

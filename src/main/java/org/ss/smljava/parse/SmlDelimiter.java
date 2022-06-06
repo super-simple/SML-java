@@ -5,11 +5,12 @@ public interface SmlDelimiter {
 
     char LEFT_PARENTHESIS = '(';
     char RIGHT_PARENTHESIS = ')';
-    char EQUAL_SIGN = '=';
-    char DOUBLE_QUOTE = '"';
-
+    char LEFT_BRACKET = '[';
+    char RIGHT_BRACKET = ']';
     char LEFT_BRACE = '{';
     char RIGHT_BRACE = '}';
+    char EQUAL_SIGN = '=';
+    char DOUBLE_QUOTE = '"';
 
     char escape = '\\';
 }

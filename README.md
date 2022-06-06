@@ -6,16 +6,16 @@ sml java implementation
 
 ## notice
 
-只实现了数据模式,不支持文档模式
+只实现了数据模式和配置模式,不支持文档模式
 
 ```text
-sml{}
-books{
+sml()
+books[
     book(name="a"){
         publishDate{20120803}
     }    
     book(name="b"){
         publishDate{20120804}
     }
-}
+]
 ```

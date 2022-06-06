@@ -1,0 +1,9 @@
+sml()
+books{
+    book(name="a"){
+        publishDate{20120803}
+    }
+    book(name="b"){
+        publishDate{20120804}
+    }
+}
