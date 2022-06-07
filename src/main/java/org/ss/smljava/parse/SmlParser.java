@@ -268,12 +268,6 @@ public class SmlParser {
             }
             elementList.add(element);
             while (index < size) {
-                char c = documentStr.charAt(index++);
-                if (c == RIGHT_BRACE) {
-                    break;
-                }
-            }
-            while (index < size) {
                 char c = documentStr.charAt(index);
                 if (c == RIGHT_BRACE) {
                     index++;
