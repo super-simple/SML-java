@@ -1,9 +1,9 @@
 sml()
 books{
-    book(name="a"){
+    booka(name="a"){
         publishDate{20120803}
     }
-    book(name="b"){
+    bookb(name="b"){
         publishDate{20120804}
     }
 }
