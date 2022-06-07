@@ -2,7 +2,7 @@ package org.ss.smljava.parse;
 
 import org.ss.smljava.bo.MutableInt;
 import org.ss.smljava.exceptionclz.SmlParseException;
-import org.ss.smljava.model.*;
+import org.ss.smljava.smlmodel.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -147,6 +147,7 @@ public class SmlParser {
                 count++;
             }
             String pairValue = sb.toString();
+            sb.delete(0, count);
             SmlAttributePair smlAttributePair = new SmlAttributePair();
             smlAttributePair.setName(pairName);
             smlAttributePair.setValue(pairValue);
@@ -181,22 +182,28 @@ public class SmlParser {
     }
 
     private List<SmlElement> parseNode(String documentStr, int size, MutableInt indexInt, StringBuilder sb) {
-        int index;
+        int index = indexInt.getValue();
         int count;
         List<SmlElement> elementList = null;
         nodeEnd:
-        while (true) {
-            index = indexInt.getValue();
+        while (index < size) {
             count = 0;
-            boolean haveAttribute = false;
+            Boolean haveAttribute = null;
+            Boolean haveNode = null;
 
             while (index < size) {
                 char c = documentStr.charAt(index++);
                 if (c == RIGHT_BRACE) {
-                    return null;
+                    haveAttribute = Boolean.FALSE;
+                    haveNode = Boolean.FALSE;
+                    break;
                 }
                 if (c == LEFT_PARENTHESIS) {
-                    haveAttribute = true;
+                    haveAttribute = Boolean.TRUE;
+                    break;
+                }
+                if (c == LEFT_BRACE) {
+                    haveNode = Boolean.TRUE;
                     break;
                 }
                 if (!Character.isWhitespace(c)) {
@@ -215,31 +222,33 @@ public class SmlParser {
             SmlNode currentNode = new SmlNode();
             indexInt.setValue(index);
 
-            if (haveAttribute) {
+            if (haveAttribute == Boolean.TRUE) {
                 List<SmlAttributePair> pairList = exceptAttribute(documentStr, size, indexInt, sb);
+                index = indexInt.getValue();
                 if (pairList != null) {
                     currentNode.setPairList(pairList);
                 }
             }
 
-            boolean haveNode = false;
-            while (index < size) {
-                char c = documentStr.charAt(index++);
-                if (c == LEFT_BRACE) {
-                    haveNode = true;
-                    break;
-                }
-                if (!Character.isWhitespace(c)) {
-                    sb.append(c);
-                    count++;
-                } else {
-                    if (count > 0) {
+            if (haveNode == null) {
+                while (index < size) {
+                    char c = documentStr.charAt(index++);
+                    if (c == LEFT_BRACE) {
+                        haveNode = true;
                         break;
+                    }
+                    if (!Character.isWhitespace(c)) {
+                        sb.append(c);
+                        count++;
+                    } else {
+                        if (count > 0) {
+                            break;
+                        }
                     }
                 }
             }
 
-            if (!haveAttribute && !haveNode) {
+            if (haveAttribute == Boolean.FALSE && haveNode == Boolean.FALSE) {
                 element.setStrValue(nodeNameOrElement);
                 return Collections.singletonList(element);
             }
@@ -247,19 +256,37 @@ public class SmlParser {
             currentNode.setName(nodeNameOrElement);
             element.setSmlNode(currentNode);
 
+            if (haveNode == Boolean.TRUE) {
+                indexInt.setValue(index);
+                List<SmlElement> children = parseNode(documentStr, size, indexInt, sb);
+                index = indexInt.getValue();
+                currentNode.setElementList(children);
+            }
+
             if (elementList == null) {
                 elementList = new ArrayList<>();
             }
             elementList.add(element);
-            index = indexInt.getValue();
             while (index < size) {
                 char c = documentStr.charAt(index++);
                 if (c == RIGHT_BRACE) {
+                    break;
+                }
+            }
+            while (index < size) {
+                char c = documentStr.charAt(index);
+                if (c == RIGHT_BRACE) {
+                    index++;
                     break nodeEnd;
                 }
+                if (!Character.isWhitespace(c)) {
+                    break;
+                }
+                index++;
             }
             indexInt.setValue(index);
         }
+        indexInt.setValue(index);
         return elementList;
     }
 

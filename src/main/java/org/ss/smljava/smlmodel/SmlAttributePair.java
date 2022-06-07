@@ -1,4 +1,4 @@
-package org.ss.smljava.model;
+package org.ss.smljava.smlmodel;
 
 public class SmlAttributePair {
     private String name;
