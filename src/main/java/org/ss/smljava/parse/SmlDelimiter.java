@@ -12,5 +12,8 @@ public interface SmlDelimiter {
     char EQUAL_SIGN = '=';
     char DOUBLE_QUOTE = '"';
 
-    char escape = '\\';
+    char ESCAPE = '\\';
+
+    char SLASH = '/';
+    char asterisk = '*';
 }

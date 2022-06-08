@@ -16,4 +16,5 @@ public class SmlMapper {
         ObjectMapper objectMapper = ObjectMappers.getObjectMapper();
         return objectMapper.convertValue(objectNode, valueType);
     }
+
 }
