@@ -1,7 +1,7 @@
 package org.ss.smljava.parse;
 
 import org.ss.smljava.bo.MutableInt;
-import org.ss.smljava.exceptionclz.SmlParseException;
+import org.ss.smljava.exceptionclz.SmlFormatException;
 import org.ss.smljava.smlmodel.*;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ public class SmlParser {
     private void parseHeader(String documentStr, int size, MutableInt indexInt, StringBuilder sb, SmlDocument smlDocument) {
         String sml = exceptNodeName(documentStr, size, indexInt, sb);
         if (sml.compareTo("sml") != 0) {
-            throw new SmlParseException("header name is not `sml`");
+            throw new SmlFormatException("header name is not `sml`");
         }
         SmlHeader smlHeader = new SmlHeader();
         int index = indexInt.getValue();
