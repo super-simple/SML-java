@@ -1,7 +1,10 @@
 package org.ss.smljava.parse;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.ss.smljava.exceptionclz.SmlBug;
+import org.ss.smljava.exceptionclz.SmlCharacterException;
 import org.ss.smljava.exceptionclz.SmlFormatException;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,6 +13,8 @@ import static org.ss.smljava.exceptionclz.SmlErrorMessage.ERROR_START;
 import static org.ss.smljava.parse.SmlDelimiter.*;
 
 public class SmlDataParser {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public static JsonNode parse(String smlStr) {
         try {
@@ -26,16 +31,18 @@ public class SmlDataParser {
             return null;
         }
         StringBuilder sb = new StringBuilder();
-        AtomicInteger indexInt = new AtomicInteger(0);
+        AtomicInteger indexHolder = new AtomicInteger(0);
         int length = smlStr.length();
-        return parseRoot(smlStr, indexInt, length, sb);
+        return parseRoot(smlStr, indexHolder, length, sb);
     }
 
-    private static JsonNode parseRoot(String smlStr, AtomicInteger indexInt, int length, StringBuilder sb) {
-        int index = indexInt.get();
+    private static JsonNode parseRoot(String smlStr, AtomicInteger indexHolder, int length, StringBuilder sb) {
+        JsonNode jsonNode = null;
+        int index = indexHolder.get();
         while (index < length) {
             char c0 = smlStr.charAt(index++);
             if (c0 == LEFT_BRACE) {
+                jsonNode = parseObject(smlStr, indexHolder, length, sb);
                 break;
             }
             if (c0 == LEFT_BRACKET) {
@@ -44,45 +51,76 @@ public class SmlDataParser {
             if (c0 == SLASH) {
                 char c1 = smlStr.charAt(index++);
                 if (c1 == SLASH) {
-                    indexInt.set(index);
-                    singleLineComment(smlStr, indexInt, length);
-                    index = indexInt.get();
+                    indexHolder.set(index);
+                    singleLineComment(smlStr, indexHolder, length);
+                    index = indexHolder.get();
                 } else if (c1 == ASTERISK) {
-                    indexInt.set(index);
-                    multiLineComment(smlStr, indexInt, length);
-                    index = indexInt.get();
+                    indexHolder.set(index);
+                    multiLineComment(smlStr, indexHolder, length);
+                    index = indexHolder.get();
                 } else {
                     throw new SmlFormatException(ERROR_START);
                 }
             }
-            if (!Character.isWhitespace(c0)) {
-                if (Character.isHighSurrogate(c0)) {
-                    char c1 = smlStr.charAt(index++);
-                    if (Character.isLowSurrogate(c1)) {
-                        if (!Character.isWhitespace(Character.toCodePoint(c0, c1))) {
-                            throw new SmlFormatException(ERROR_START);
-                        }
-                    } else {
+            index = validateHighWhitespace(smlStr, index, c0);
+        }
+        return jsonNode;
+    }
+
+    private static int validateHighWhitespace(String smlStr, int index, char c0) {
+        if (!Character.isWhitespace(c0)) {
+            if (Character.isHighSurrogate(c0)) {
+                char c1 = smlStr.charAt(index++);
+                if (Character.isLowSurrogate(c1)) {
+                    if (!Character.isWhitespace(Character.toCodePoint(c0, c1))) {
                         throw new SmlFormatException(ERROR_START);
                     }
                 } else {
                     throw new SmlFormatException(ERROR_START);
                 }
+            } else {
+                throw new SmlFormatException(ERROR_START);
+            }
+        }
+        return index;
+    }
+
+    private static JsonNode parseObject(String smlStr, AtomicInteger indexHolder, int length, StringBuilder sb) {
+        int index = indexHolder.get();
+        ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
+        while (index < length) {
+            char c0 = smlStr.charAt(index++);
+            if (Character.isWhitespace(c0)) {
+                continue;
+            }
+            if (Character.isHighSurrogate(c0)) {
+                char c1 = smlStr.charAt(index++);
+                if (Character.isLowSurrogate(c1)) {
+                    if (Character.isWhitespace(Character.toCodePoint(c0, c1))) {
+                        continue;
+                    } else {
+                        sb.append(c0).append(c1);
+                    }
+                } else {
+                    throw new SmlCharacterException("illegal character");
+                }
+            }
+            if (c0 == SINGLE_QUOTE) {
+
+            }
+            if (c0 == DOUBLE_QUOTE) {
+
             }
         }
         return null;
     }
 
-    private static JsonNode parseObject(String smlStr, AtomicInteger indexInt, int length, StringBuilder sb) {
+    private static JsonNode parseArray(String smlStr, AtomicInteger indexHolder, int length, StringBuilder sb) {
         return null;
     }
 
-    private static JsonNode parseArray(String smlStr, AtomicInteger indexInt, int length, StringBuilder sb) {
-        return null;
-    }
-
-    private static void singleLineComment(String smlStr, AtomicInteger indexInt, int length) {
-        int index = indexInt.get();
+    private static void singleLineComment(String smlStr, AtomicInteger indexHolder, int length) {
+        int index = indexHolder.get();
         while (index < length) {
             char c0 = smlStr.charAt(index++);
             if (c0 == LF) {
@@ -98,11 +136,11 @@ public class SmlDataParser {
                 }
             }
         }
-        indexInt.set(index);
+        indexHolder.set(index);
     }
 
-    private static void multiLineComment(String smlStr, AtomicInteger indexInt, int length) {
-        int index = indexInt.get();
+    private static void multiLineComment(String smlStr, AtomicInteger indexHolder, int length) {
+        int index = indexHolder.get();
         while (index < length) {
             char c0 = smlStr.charAt(index++);
             if (c0 == ASTERISK) {
@@ -112,7 +150,7 @@ public class SmlDataParser {
                 }
             }
         }
-        indexInt.set(index);
+        indexHolder.set(index);
     }
 
 }
