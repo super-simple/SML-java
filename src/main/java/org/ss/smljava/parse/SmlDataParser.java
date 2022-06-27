@@ -51,12 +51,10 @@ public class SmlDataParser {
                 char c1 = smlStr.charAt(index++);
                 if (c1 == SLASH) {
                     indexHolder.setValue(index);
-                    singleLineComment(smlStr, indexHolder, length);
-                    index = indexHolder.getValue();
+                    index = singleLineComment(smlStr, index, length);
                 } else if (c1 == ASTERISK) {
                     indexHolder.setValue(index);
-                    multiLineComment(smlStr, indexHolder, length);
-                    index = indexHolder.getValue();
+                    index = multiLineComment(smlStr, index, length);
                 } else {
                     throw new SmlFormatException(ERROR_START);
                 }
@@ -111,10 +109,14 @@ public class SmlDataParser {
                 }
             }
             if (c0 == SINGLE_QUOTE) {
-
+                if (count > 0) {
+                    throw new SmlFormatException("illegal format");
+                }
             }
             if (c0 == DOUBLE_QUOTE) {
-
+                if (count > 0) {
+                    throw new SmlFormatException("illegal format");
+                }
             }
         }
         return null;
@@ -124,15 +126,16 @@ public class SmlDataParser {
         return null;
     }
 
-    private static void singleLineComment(String smlStr, MutableInt indexHolder, int length) {
-        int index = indexHolder.getValue();
+    private static int singleLineComment(String smlStr, int index, int length) {
+        char c0;
+        char c1;
         while (index < length) {
-            char c0 = smlStr.charAt(index++);
+            c0 = smlStr.charAt(index++);
             if (c0 == LF) {
                 break;
             }
             if (c0 == CR) {
-                char c1 = smlStr.charAt(index++);
+                c1 = smlStr.charAt(index++);
                 if (c1 == LF) {
                     break;
                 } else {
@@ -141,21 +144,57 @@ public class SmlDataParser {
                 }
             }
         }
-        indexHolder.setValue(index);
+        return index;
     }
 
-    private static void multiLineComment(String smlStr, MutableInt indexHolder, int length) {
-        int index = indexHolder.getValue();
+    private static int multiLineComment(String smlStr, int index, int length) {
+        char c0 = 0;
+        char c1 = 0;
         while (index < length) {
-            char c0 = smlStr.charAt(index++);
+            c0 = smlStr.charAt(index++);
             if (c0 == ASTERISK) {
-                char c1 = smlStr.charAt(index++);
+                c1 = smlStr.charAt(index++);
                 if (c1 == SLASH) {
                     break;
                 }
             }
         }
-        indexHolder.setValue(index);
+        if (!(c0 == ASTERISK && c1 == SLASH)) {
+            throw new SmlFormatException("multi line comment not close");
+        }
+        return index;
+    }
+
+    private static int singleQuote(String smlStr, int index, int length, StringBuilder sb) {
+        char c0 = 0;
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (c0 != SINGLE_QUOTE) {
+                sb.append(c0);
+            } else {
+                break;
+            }
+        }
+        if (c0 != SINGLE_QUOTE) {
+            throw new SmlFormatException("single quote not close");
+        }
+        return index;
+    }
+
+    private static int doubleQuote(String smlStr, int index, int length, StringBuilder sb) {
+        char c0 = 0;
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (c0 != DOUBLE_QUOTE) {
+                sb.append(c0);
+            } else {
+                break;
+            }
+        }
+        if (c0 != DOUBLE_QUOTE) {
+            throw new SmlFormatException("double quote not close");
+        }
+        return index;
     }
 
 }
