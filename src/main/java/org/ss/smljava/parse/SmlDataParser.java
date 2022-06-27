@@ -86,8 +86,10 @@ public class SmlDataParser {
         int index = indexHolder.getValue();
         ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
         int count = 0;
+        char c0;
+        char c1;
         while (index < length) {
-            char c0 = smlStr.charAt(index++);
+            c0 = smlStr.charAt(index++);
             if (Character.isWhitespace(c0)) {
                 if (count > 0) {
                     break;
@@ -95,11 +97,27 @@ public class SmlDataParser {
                     continue;
                 }
             }
+            if (c0 == SINGLE_QUOTE) {
+                if (count > 0) {
+                    throw new SmlFormatException("illegal format");
+                }
+                index = singleQuote(smlStr, index, length, sb);
+                break;
+            }
+            if (c0 == DOUBLE_QUOTE) {
+                if (count > 0) {
+                    throw new SmlFormatException("illegal format");
+                }
+                index = doubleQuote(smlStr, index, length, sb);
+                break;
+            }
             if (Character.isHighSurrogate(c0)) {
-                char c1 = smlStr.charAt(index++);
+                c1 = smlStr.charAt(index++);
                 if (Character.isLowSurrogate(c1)) {
                     if (Character.isWhitespace(Character.toCodePoint(c0, c1))) {
-                        continue;
+                        if (count > 0) {
+                            break;
+                        }
                     } else {
                         sb.append(c0).append(c1);
                         count++;
@@ -107,16 +125,8 @@ public class SmlDataParser {
                 } else {
                     throw new SmlCharacterException("illegal character");
                 }
-            }
-            if (c0 == SINGLE_QUOTE) {
-                if (count > 0) {
-                    throw new SmlFormatException("illegal format");
-                }
-            }
-            if (c0 == DOUBLE_QUOTE) {
-                if (count > 0) {
-                    throw new SmlFormatException("illegal format");
-                }
+            } else {
+                sb.append(c0);
             }
         }
         return null;
