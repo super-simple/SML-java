@@ -1,5 +1,9 @@
 {//数据模式下,顶层对象无需有名字
     attribute1[
+        "aaa"
+        aaaa
+        []
+        {}
     ]
     attribute2{
         attribute3(value3) //暗示这是一个简单属性
