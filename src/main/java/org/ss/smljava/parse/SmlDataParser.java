@@ -26,7 +26,7 @@ public class SmlDataParser {
     }
 
     public static JsonNode doParse(String smlStr) {
-        if (smlStr == null) {
+        if (smlStr == null || smlStr.isEmpty()) {
             return null;
         }
         StringBuilder sb = new StringBuilder();
@@ -59,27 +59,22 @@ public class SmlDataParser {
                     throw new SmlFormatException(ERROR_START);
                 }
             }
-            index = validateHighWhitespace(smlStr, index, c0);
-        }
-        return jsonNode;
-    }
-
-    private static int validateHighWhitespace(String smlStr, int index, char c0) {
-        if (!Character.isWhitespace(c0)) {
-            if (Character.isHighSurrogate(c0)) {
-                char c1 = smlStr.charAt(index++);
-                if (Character.isLowSurrogate(c1)) {
-                    if (!Character.isWhitespace(Character.toCodePoint(c0, c1))) {
+            if (!Character.isWhitespace(c0)) {
+                if (Character.isHighSurrogate(c0)) {
+                    char c1 = smlStr.charAt(index++);
+                    if (Character.isLowSurrogate(c1)) {
+                        if (!Character.isWhitespace(Character.toCodePoint(c0, c1))) {
+                            throw new SmlFormatException(ERROR_START);
+                        }
+                    } else {
                         throw new SmlFormatException(ERROR_START);
                     }
                 } else {
                     throw new SmlFormatException(ERROR_START);
                 }
-            } else {
-                throw new SmlFormatException(ERROR_START);
             }
         }
-        return index;
+        return jsonNode;
     }
 
     private static JsonNode parseObject(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
