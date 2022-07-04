@@ -3,6 +3,7 @@ package org.ss.smljava.parse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.ss.smljava.bo.MutableInt;
 import org.ss.smljava.exceptionclz.SmlBug;
 import org.ss.smljava.exceptionclz.SmlCharacterException;
@@ -32,19 +33,36 @@ public class SmlDataParser {
         StringBuilder sb = new StringBuilder();
         MutableInt indexHolder = new MutableInt(0);
         int length = smlStr.length();
-        return parseRoot(smlStr, indexHolder, length, sb);
+        return parseValue(smlStr, indexHolder, length, sb);
     }
 
-    private static JsonNode parseRoot(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+    private static JsonNode parseValue(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         JsonNode jsonNode = null;
         int index = indexHolder.getValue();
+        char c0;
         while (index < length) {
-            char c0 = smlStr.charAt(index++);
+            c0 = smlStr.charAt(index++);
             if (c0 == LEFT_BRACE) {
                 jsonNode = parseObject(smlStr, indexHolder, length, sb);
                 break;
             }
             if (c0 == LEFT_BRACKET) {
+                jsonNode = parseArray(smlStr, indexHolder, length, sb);
+                break;
+            }
+            if (c0 == LEFT_PARENTHESIS) {
+                while (index < length) {
+                    c0 = smlStr.charAt(index++);
+                    if (c0 != RIGHT_PARENTHESIS) {
+                        sb.append(c0);
+                    } else {
+                        break;
+                    }
+                }
+                if (c0 != SINGLE_QUOTE) {
+                    throw new SmlFormatException("string value not close");
+                }
+                jsonNode = TextNode.valueOf(sb.toString());
                 break;
             }
             if (c0 == SLASH) {
@@ -74,6 +92,7 @@ public class SmlDataParser {
                 }
             }
         }
+        sb.delete(0, sb.length());
         return jsonNode;
     }
 
@@ -81,50 +100,80 @@ public class SmlDataParser {
         int index = indexHolder.getValue();
         ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
         int count = 0;
-        char c0;
-        char c1;
+        char c0, c1;
         while (index < length) {
-            c0 = smlStr.charAt(index++);
-            if (Character.isWhitespace(c0)) {
-                if (count > 0) {
+            // find key
+            while (index < length) {
+                c0 = smlStr.charAt(index++);
+                if (Character.isWhitespace(c0)) {
+                    if (count > 0) {
+                        break;
+                    } else {
+                        continue;
+                    }
+                }
+                if (c0 == SINGLE_QUOTE) {
+                    if (count > 0) {
+                        throw new SmlFormatException("illegal format");
+                    }
+                    index = singleQuote(smlStr, index, length, sb);
                     break;
-                } else {
-                    continue;
                 }
-            }
-            if (c0 == SINGLE_QUOTE) {
-                if (count > 0) {
-                    throw new SmlFormatException("illegal format");
+                if (c0 == DOUBLE_QUOTE) {
+                    if (count > 0) {
+                        throw new SmlFormatException("illegal format");
+                    }
+                    index = doubleQuote(smlStr, index, length, sb);
+                    break;
                 }
-                index = singleQuote(smlStr, index, length, sb);
-                break;
-            }
-            if (c0 == DOUBLE_QUOTE) {
-                if (count > 0) {
-                    throw new SmlFormatException("illegal format");
-                }
-                index = doubleQuote(smlStr, index, length, sb);
-                break;
-            }
-            if (Character.isHighSurrogate(c0)) {
-                c1 = smlStr.charAt(index++);
-                if (Character.isLowSurrogate(c1)) {
-                    if (Character.isWhitespace(Character.toCodePoint(c0, c1))) {
-                        if (count > 0) {
-                            break;
+                if (Character.isHighSurrogate(c0)) {
+                    c1 = smlStr.charAt(index++);
+                    if (Character.isLowSurrogate(c1)) {
+                        if (Character.isWhitespace(Character.toCodePoint(c0, c1))) {
+                            if (count > 0) {
+                                break;
+                            }
+                        } else {
+                            sb.append(c0).append(c1);
+                            count++;
                         }
                     } else {
-                        sb.append(c0).append(c1);
-                        count++;
+                        throw new SmlCharacterException("illegal character");
                     }
                 } else {
-                    throw new SmlCharacterException("illegal character");
+                    sb.append(c0);
                 }
-            } else {
-                sb.append(c0);
             }
+            String key = sb.toString();
+            if (key.isEmpty()) {
+                throw new SmlCharacterException("illegal key,a empty key");
+            }
+            sb.delete(0, sb.length());
+            //skip empty character
+            while (index < length) {
+                c0 = smlStr.charAt(index);
+                if (!Character.isWhitespace(c0)) {
+                    if (Character.isHighSurrogate(c0)) {
+                        c1 = smlStr.charAt(index);
+                        if (Character.isLowSurrogate(c1)) {
+                            if (!Character.isWhitespace(Character.toCodePoint(c0, c1))) {
+                                break;
+                            }
+                        } else {
+                            throw new SmlCharacterException("illegal character");
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                index++;
+            }
+            //find value
+            indexHolder.setValue(index);
+            JsonNode jsonNode = parseValue(smlStr, indexHolder, length, sb);
+            objectNode.set(key, jsonNode);
         }
-        return null;
+        return objectNode;
     }
 
     private static JsonNode parseArray(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
