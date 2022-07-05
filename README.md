@@ -1,48 +1,31 @@
 # SML-java
 
-sml java implementation
+ss json.
+simply json.
 
-[SML-specification](https://github.com/super-simple/SML-specification)
-
-## 实现
-
-### 数据模式
-
-支持序列化和反序列化数据,功能和jackson类似
-
-```sml
-{//数据模式下,顶层对象无需有名字
-    attribute1[
+```ssjson
+{
+    /*
+        多行注释 multiline comment
+    */
+    attr1[
+        "aaa" // 单行注释 
+        'aaa'
+        123
+        []
+        {}
     ]
-    attribute2{
-        attribute3(value3) //暗示这是一个简单属性
-        attribute4(value4)
-        attribute5{//暗示这是一个对象
-            attr1(value1)
+    attr2{
+        attr1 "var1" //可选的单引号或者双引号
+        attr2 "var2"
+        "attr 3" 123 // 123是数字类型
+        'attr 4' "123\ //多行字符串
+        \123\ //多行字符串
+        \123"
+        attr5 {
+            attr1 "var1"
         }
-        "attribute 6"{ // 数据模式下,属性名字可以包含空白字符串,用双引号或者单引号包裹均可
-            attr2(value2)
-        }
-    }
-}
-```
-
-### 配置模式
-
-只支持反序列化,读取成对应的实体
-
-```sml
-sml(){} //保留,用于以后扩展
-document(foo="bar" bar="foo"){
-    //body 只包含节点
-    body{
-        //h1 只包含值
-        h1{
-            hello document
-        }
-        h2{
-            hello document
-        }
+        attr6 []
     }
 }
 ```
