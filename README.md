@@ -1,4 +1,4 @@
-# SML-java
+# ss-java
 
 ss json.
 simply json.
