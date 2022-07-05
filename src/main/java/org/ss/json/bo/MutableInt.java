@@ -1,4 +1,4 @@
-package org.ss.smljava.bo;
+package org.ss.json.bo;
 
 public class MutableInt {
     private int value;

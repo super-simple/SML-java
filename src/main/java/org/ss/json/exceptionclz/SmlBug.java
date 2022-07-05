@@ -1,4 +1,4 @@
-package org.ss.smljava.exceptionclz;
+package org.ss.json.exceptionclz;
 
 public class SmlBug extends RuntimeException {
     public SmlBug() {

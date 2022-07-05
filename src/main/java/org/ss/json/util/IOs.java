@@ -1,8 +1,7 @@
-package org.ss.smljava.util;
+package org.ss.json.util;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 public class IOs {
 

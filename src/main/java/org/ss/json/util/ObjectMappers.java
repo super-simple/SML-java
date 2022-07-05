@@ -1,4 +1,4 @@
-package org.ss.smljava.util;
+package org.ss.json.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

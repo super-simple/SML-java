@@ -1,4 +1,4 @@
-package org.ss.smljava.exceptionclz;
+package org.ss.json.exceptionclz;
 
 public class SmlCharacterException extends RuntimeException {
     public SmlCharacterException() {

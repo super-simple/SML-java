@@ -1,17 +1,17 @@
-package org.ss.smljava.parse;
+package org.ss.json.parse;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.ss.smljava.bo.MutableInt;
-import org.ss.smljava.exceptionclz.SmlBug;
-import org.ss.smljava.exceptionclz.SmlCharacterException;
-import org.ss.smljava.exceptionclz.SmlFormatException;
+import org.ss.json.bo.MutableInt;
+import org.ss.json.exceptionclz.SmlBug;
+import org.ss.json.exceptionclz.SmlCharacterException;
+import org.ss.json.exceptionclz.SmlFormatException;
 
-import static org.ss.smljava.exceptionclz.SmlErrorMessage.ERROR_START;
-import static org.ss.smljava.parse.SmlDelimiter.*;
+import static org.ss.json.exceptionclz.SmlErrorMessage.ERROR_START;
+import static org.ss.json.parse.SmlDelimiter.*;
 
 public class SmlDataParser {
 
