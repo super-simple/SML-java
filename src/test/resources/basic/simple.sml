@@ -1,22 +1,16 @@
-{//数据模式下,顶层对象无需有名字
-    attribute1[
-        "aaa"
-        aaaa
-        []
-        {}
-    ]
-    attribute2{
-        attribute3 "value3" //暗示这是一个简单属性
-        attribute4 "value4"
-        attribute5{ //暗示这是一个对象
-            attr1 1234
-            attr2 '123'
-            attr3 "123\
-            \123\
-            \123"
-        }
-        "attribute 6"{ // 数据模式下,属性名字可以包含空白字符串,用双引号或者单引号包裹均可
-            attr2 "value2"
-        }
+sml() //保留,用于以后扩展
+document(foo="bar" bar="foo"){
+    //body 只包含节点
+    body{
+        //h1 只包含值
+        h1{hello document}
+        h2{hello document}
     }
+    ul[
+        li{123}
+        li{123}
+        li{123}
+        li{123}
+    ]
+    h1{`h1{}`}//相当于CDATA
 }
