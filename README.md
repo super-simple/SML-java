@@ -1,4 +1,4 @@
-# SML-java
+# ss-java
 
 sml java implementation
 
