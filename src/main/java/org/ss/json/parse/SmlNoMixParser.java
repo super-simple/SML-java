@@ -5,10 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.ss.json.bo.MutableInt;
 import org.ss.json.exceptionclz.SmlBug;
+import org.ss.json.exceptionclz.SmlErrorMessage;
 import org.ss.json.exceptionclz.SmlFormatException;
 import org.ss.json.util.ObjectMappers;
 
-import static org.ss.json.exceptionclz.SmlErrorMessage.ERROR_START;
+import static org.ss.json.exceptionclz.SmlErrorMessage.EXCEPT_LEFT_PARENTHESIS;
 import static org.ss.json.exceptionclz.SmlErrorMessage.ILLEGAL_CHARACTER_FORMAT;
 
 public class SmlNoMixParser {
@@ -47,18 +48,29 @@ public class SmlNoMixParser {
                     c1 = smlStr.charAt(index++);
                     if (Character.isLowSurrogate(c1)) {
                         if (!Character.isWhitespace(Character.toCodePoint(c0, c1))) {
-                            throw new SmlFormatException(ERROR_START);
+                            //sml is ascii
+                            throw new SmlFormatException(SmlErrorMessage.NOT_START_WITH_SML);
                         }
                     } else {
                         throw new SmlFormatException(ILLEGAL_CHARACTER_FORMAT);
                     }
                 } else {
                     sb.append(c0);
+                    count++;
+                }
+            } else {
+                if (count != 0) {
+                    break;
                 }
             }
         }
+        String sml = sb.toString();
+        if (!SmlDelimiter.SML.equals(sml)) {
+            throw new SmlFormatException(SmlErrorMessage.NOT_START_WITH_SML);
+        }
         sb.delete(0, count);
         indexHolder.setValue(index);
+        exceptAttribute(smlStr, indexHolder, length, sb, objectNode);
         return objectNode;
     }
 
@@ -66,7 +78,36 @@ public class SmlNoMixParser {
         return null;
     }
 
-    private static void parseAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode objectNode) {
+    private static void exceptAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode objectNode) {
+        int index = indexHolder.getValue();
+        char c0, c1;
+        int count = 0;
+        // find (
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (c0 == SmlDelimiter.LEFT_PARENTHESIS) {
+                break;
+            }
+            if (!Character.isWhitespace(c0)) {
+                if (Character.isHighSurrogate(c0)) {
+                    c1 = smlStr.charAt(index++);
+                    if (Character.isLowSurrogate(c1)) {
+                        if (!Character.isWhitespace(Character.toCodePoint(c0, c1))) {
+                            throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
+                        }
+                    } else {
+                        throw new SmlFormatException(ILLEGAL_CHARACTER_FORMAT);
+                    }
+                } else {
+                    throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
+                }
+            }
+        }
+        //loop read attribute
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
 
+        }
     }
+
 }
