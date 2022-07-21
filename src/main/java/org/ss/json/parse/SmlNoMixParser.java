@@ -9,8 +9,10 @@ import org.ss.json.exceptionclz.SmlErrorMessage;
 import org.ss.json.exceptionclz.SmlFormatException;
 import org.ss.json.util.ObjectMappers;
 
+import static org.ss.json.exceptionclz.SmlErrorMessage.ERROR_ATTRIBUTE;
 import static org.ss.json.exceptionclz.SmlErrorMessage.EXCEPT_LEFT_PARENTHESIS;
-import static org.ss.json.exceptionclz.SmlErrorMessage.ILLEGAL_CHARACTER_FORMAT;
+import static org.ss.json.parse.SmlDelimiter.LEFT_PARENTHESIS;
+import static org.ss.json.parse.SmlDelimiter.RIGHT_PARENTHESIS;
 
 public class SmlNoMixParser {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMappers.getObjectMapper();
@@ -39,25 +41,13 @@ public class SmlNoMixParser {
     private static ObjectNode parseHeader(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
         int index = indexHolder.getValue();
-        char c0, c1;
+        char c0;
         int count = 0;
         while (index < length) {
             c0 = smlStr.charAt(index++);
             if (!Character.isWhitespace(c0)) {
-                if (Character.isHighSurrogate(c0)) {
-                    c1 = smlStr.charAt(index++);
-                    if (Character.isLowSurrogate(c1)) {
-                        if (!Character.isWhitespace(Character.toCodePoint(c0, c1))) {
-                            //sml is ascii
-                            throw new SmlFormatException(SmlErrorMessage.NOT_START_WITH_SML);
-                        }
-                    } else {
-                        throw new SmlFormatException(ILLEGAL_CHARACTER_FORMAT);
-                    }
-                } else {
-                    sb.append(c0);
-                    count++;
-                }
+                sb.append(c0);
+                count++;
             } else {
                 if (count != 0) {
                     break;
@@ -80,33 +70,40 @@ public class SmlNoMixParser {
 
     private static void exceptAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode objectNode) {
         int index = indexHolder.getValue();
-        char c0, c1;
+        char c0 = 0;
         int count = 0;
         // find (
         while (index < length) {
             c0 = smlStr.charAt(index++);
-            if (c0 == SmlDelimiter.LEFT_PARENTHESIS) {
+            if (c0 == LEFT_PARENTHESIS) {
                 break;
             }
             if (!Character.isWhitespace(c0)) {
-                if (Character.isHighSurrogate(c0)) {
-                    c1 = smlStr.charAt(index++);
-                    if (Character.isLowSurrogate(c1)) {
-                        if (!Character.isWhitespace(Character.toCodePoint(c0, c1))) {
-                            throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
-                        }
-                    } else {
-                        throw new SmlFormatException(ILLEGAL_CHARACTER_FORMAT);
-                    }
-                } else {
-                    throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
-                }
+                throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
             }
         }
-        //loop read attribute
+        if (c0 != LEFT_PARENTHESIS) {
+            throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
+        }
+        // loop find attribute
+        attributeEnd:
         while (index < length) {
-            c0 = smlStr.charAt(index++);
-
+            //find attribute name
+            while (index < length) {
+                c0 = smlStr.charAt(index++);
+                if (c0 == RIGHT_PARENTHESIS) {
+                    if (count != 0) {
+                        throw new SmlFormatException(ERROR_ATTRIBUTE);
+                    }
+                    break attributeEnd;
+                }
+                if (!Character.isWhitespace(c0)) {
+                    sb.append(c0);
+                    count++;
+                } else {
+                    break;
+                }
+            }
         }
     }
 
