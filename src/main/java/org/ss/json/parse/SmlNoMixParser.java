@@ -9,10 +9,8 @@ import org.ss.json.exceptionclz.SmlErrorMessage;
 import org.ss.json.exceptionclz.SmlFormatException;
 import org.ss.json.util.ObjectMappers;
 
-import static org.ss.json.exceptionclz.SmlErrorMessage.ERROR_ATTRIBUTE;
-import static org.ss.json.exceptionclz.SmlErrorMessage.EXCEPT_LEFT_PARENTHESIS;
-import static org.ss.json.parse.SmlDelimiter.LEFT_PARENTHESIS;
-import static org.ss.json.parse.SmlDelimiter.RIGHT_PARENTHESIS;
+import static org.ss.json.exceptionclz.SmlErrorMessage.*;
+import static org.ss.json.parse.SmlDelimiter.*;
 
 public class SmlNoMixParser {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMappers.getObjectMapper();
@@ -72,6 +70,7 @@ public class SmlNoMixParser {
         int index = indexHolder.getValue();
         char c0 = 0;
         int count = 0;
+        boolean hasEqualSign = false;
         // find (
         while (index < length) {
             c0 = smlStr.charAt(index++);
@@ -89,6 +88,7 @@ public class SmlNoMixParser {
         attributeEnd:
         while (index < length) {
             //find attribute name
+            hasEqualSign = false;
             while (index < length) {
                 c0 = smlStr.charAt(index++);
                 if (c0 == RIGHT_PARENTHESIS) {
@@ -97,14 +97,39 @@ public class SmlNoMixParser {
                     }
                     break attributeEnd;
                 }
+                if (c0 == EQUAL_SIGN) {
+                    if (count == 0) {
+                        throw new SmlFormatException(EXCEPT_ATTRIBUTE_NAME);
+                    }
+                    hasEqualSign = true;
+                    break;
+                }
                 if (!Character.isWhitespace(c0)) {
                     sb.append(c0);
                     count++;
                 } else {
-                    break;
+                    if (count != 0) {
+                        break;
+                    }
                 }
             }
         }
+        String attributeName = sb.toString();
+        sb.delete(0, count);
+        count = 0;
+        if (!hasEqualSign) {
+            //find equal
+            while (index < length) {
+                c0 = smlStr.charAt(index++);
+                if (c0 == EQUAL_SIGN) {
+                    break;
+                }
+            }
+            if (c0 != EQUAL_SIGN) {
+                throw new SmlFormatException(EXCEPT_EQUAL);
+            }
+        }
+
     }
 
 }
