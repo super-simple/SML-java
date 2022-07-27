@@ -113,23 +113,24 @@ public class SmlNoMixParser {
                     }
                 }
             }
-        }
-        String attributeName = sb.toString();
-        sb.delete(0, count);
-        count = 0;
-        if (!hasEqualSign) {
-            //find equal
-            while (index < length) {
-                c0 = smlStr.charAt(index++);
-                if (c0 == EQUAL_SIGN) {
-                    break;
+            String attributeName = sb.toString();
+            sb.delete(0, count);
+            count = 0;
+            if (!hasEqualSign) {
+                //find equal
+                while (index < length) {
+                    c0 = smlStr.charAt(index++);
+                    if (c0 == EQUAL_SIGN) {
+                        break;
+                    }
+                }
+                if (c0 != EQUAL_SIGN) {
+                    throw new SmlFormatException(EXCEPT_EQUAL);
                 }
             }
-            if (c0 != EQUAL_SIGN) {
-                throw new SmlFormatException(EXCEPT_EQUAL);
-            }
-        }
+            // find attribute value
 
+        }
     }
 
 }
