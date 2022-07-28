@@ -66,6 +66,25 @@ public class SmlNoMixParser {
         return null;
     }
 
+    private static int exceptElementName(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+        int index = indexHolder.getValue();
+        char c0 = 0;
+        int count = 0;
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (c0 == LEFT_PARENTHESIS) {
+                break;
+            }
+            if (c0 == LEFT_BRACE) {
+                break;
+            }
+            if (!Character.isWhitespace(c0)) {
+                sb.append(c0);
+            }
+        }
+        return 0;
+    }
+
     private static void exceptAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode objectNode) {
         int index = indexHolder.getValue();
         char c0 = 0;
@@ -88,7 +107,6 @@ public class SmlNoMixParser {
         attributeEnd:
         while (index < length) {
             //find attribute name
-            hasEqualSign = false;
             while (index < length) {
                 c0 = smlStr.charAt(index++);
                 if (c0 == RIGHT_PARENTHESIS) {
@@ -127,9 +145,43 @@ public class SmlNoMixParser {
                 if (c0 != EQUAL_SIGN) {
                     throw new SmlFormatException(EXCEPT_EQUAL);
                 }
+            } else {
+                hasEqualSign = false;
             }
             // find attribute value
-
+            valueEnd:
+            while (index < length) {
+                c0 = smlStr.charAt(index++);
+                if (c0 == SINGLE_QUOTE) {
+                    while (index < length) {
+                        c0 = smlStr.charAt(index++);
+                        if (c0 != SINGLE_QUOTE) {
+                            sb.append(c0);
+                            count++;
+                        } else {
+                            break valueEnd;
+                        }
+                    }
+                }
+                if (c0 == DOUBLE_QUOTE) {
+                    while (index < length) {
+                        c0 = smlStr.charAt(index++);
+                        if (c0 != DOUBLE_QUOTE) {
+                            sb.append(c0);
+                            count++;
+                        } else {
+                            break valueEnd;
+                        }
+                    }
+                }
+                if (!Character.isWhitespace(c0)) {
+                    throw new SmlFormatException(EXCEPT_QUOTE);
+                }
+            }
+            String attributeValue = sb.toString();
+            sb.delete(0, count);
+            count = 0;
+            objectNode.put(attributeName, attributeValue);
         }
     }
 
