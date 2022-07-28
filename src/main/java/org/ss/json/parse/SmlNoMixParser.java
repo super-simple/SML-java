@@ -2,6 +2,7 @@ package org.ss.json.parse;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.ss.json.bo.MutableInt;
 import org.ss.json.exceptionclz.SmlBug;
@@ -63,26 +64,78 @@ public class SmlNoMixParser {
     }
 
     private static ObjectNode parseBody(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
-        return null;
+        int model = exceptElementName(smlStr, indexHolder, length, sb);
+        ObjectNode rootNode = OBJECT_MAPPER.createObjectNode();
+        String elementName = sb.toString();
+        sb.delete(0, sb.length());
+        if (model < 3) {
+            ObjectNode firstNode = OBJECT_MAPPER.createObjectNode();
+            rootNode.set(elementName, firstNode);
+            if (model == 1) {
+                exceptAttribute(smlStr, indexHolder, length, sb, firstNode);
+            }
+            exceptElementValue(smlStr, indexHolder, length, sb, firstNode);
+        } else {
+            ArrayNode firstNode = OBJECT_MAPPER.createArrayNode();
+            rootNode.set(elementName, firstNode);
+            exceptArrayElementValue(smlStr, indexHolder, length, sb, firstNode);
+        }
+        return rootNode;
+    }
+
+    private static void exceptArrayElementValue(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ArrayNode firstNode) {
+    }
+
+    private static void exceptElementValue(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode firstNode) {
     }
 
     private static int exceptElementName(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
-        char c0 = 0;
-        int count = 0;
+        char c0;
+        int model = 0;
         while (index < length) {
-            c0 = smlStr.charAt(index++);
+            c0 = smlStr.charAt(index);
             if (c0 == LEFT_PARENTHESIS) {
+                model = 1;
                 break;
             }
             if (c0 == LEFT_BRACE) {
+                model = 2;
+                break;
+            }
+            if (c0 == LEFT_BRACKET) {
+                model = 3;
                 break;
             }
             if (!Character.isWhitespace(c0)) {
                 sb.append(c0);
             }
+            index++;
         }
-        return 0;
+
+        if (model == 0) {
+            while (index < length) {
+                c0 = smlStr.charAt(index);
+                if (c0 == LEFT_PARENTHESIS) {
+                    model = 1;
+                    break;
+                }
+                if (c0 == LEFT_BRACE) {
+                    model = 2;
+                    break;
+                }
+                if (c0 == LEFT_BRACKET) {
+                    model = 3;
+                    break;
+                }
+                if (!Character.isWhitespace(c0)) {
+                    throw new SmlFormatException(EXCEPT_LEFT);
+                }
+                index++;
+            }
+        }
+        indexHolder.setValue(index);
+        return model;
     }
 
     private static void exceptAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode objectNode) {
