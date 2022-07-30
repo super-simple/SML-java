@@ -12,5 +12,12 @@ document(foo="bar" bar="foo"){
         li{aa{123}}
         li{aa{123}}
     ]
+    ul[
+    123
+    123
+    213
+    123
+    123
+    ]
     h1{`h1{}`}//相当于CDATA
 }

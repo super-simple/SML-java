@@ -74,7 +74,7 @@ public class SmlNoMixParser {
             if (model == 1) {
                 exceptAttribute(smlStr, indexHolder, length, sb, firstNode);
             }
-            exceptElementValue(smlStr, indexHolder, length, sb, firstNode);
+            exceptObjectElementValue(smlStr, indexHolder, length, sb, firstNode);
         } else {
             ArrayNode firstNode = OBJECT_MAPPER.createArrayNode();
             rootNode.set(elementName, firstNode);
@@ -87,7 +87,7 @@ public class SmlNoMixParser {
 
     }
 
-    private static void exceptElementValue(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode firstNode) {
+    private static void exceptObjectElementValue(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode firstNode) {
     }
 
     private static int exceptElementName(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
