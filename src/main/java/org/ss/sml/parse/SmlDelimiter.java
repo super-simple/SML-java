@@ -13,7 +13,10 @@ public interface SmlDelimiter {
     char DOUBLE_QUOTE = '"';
     char SINGLE_QUOTE = '\'';
 
+    char BACK_QUOTE = '`';
+
     char ESCAPE = '\\';
+
     char SLASH = '/';
 
     char ASTERISK = '*';

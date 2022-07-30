@@ -40,7 +40,7 @@ public class SmlNoMixParser {
     private static ObjectNode parseHeader(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
         int index = indexHolder.getValue();
-        char c0;
+        char c0 = 0;
         int count = 0;
         while (index < length) {
             c0 = smlStr.charAt(index++);
@@ -58,6 +58,21 @@ public class SmlNoMixParser {
             throw new SmlFormatException(SmlErrorMessage.NOT_START_WITH_SML);
         }
         sb.delete(0, count);
+        indexHolder.setValue(index);
+
+        // find (
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (c0 == LEFT_PARENTHESIS) {
+                break;
+            }
+            if (!Character.isWhitespace(c0)) {
+                throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
+            }
+        }
+        if (c0 != LEFT_PARENTHESIS) {
+            throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
+        }
         indexHolder.setValue(index);
         exceptAttribute(smlStr, indexHolder, length, sb, objectNode);
         return objectNode;
@@ -84,10 +99,34 @@ public class SmlNoMixParser {
     }
 
     private static void exceptArrayElementValue(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ArrayNode firstNode) {
+        int index = indexHolder.getValue();
+        // tow model,primitive type or container type
+        while (index < length) {
 
+        }
+        indexHolder.setValue(index);
     }
 
     private static void exceptObjectElementValue(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode firstNode) {
+    }
+
+    private static char readString(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+        int index = indexHolder.getValue();
+        char c0 = 0;
+        int count = 0;
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (!Character.isWhitespace(c0)) {
+                sb.append(c0);
+                count++;
+            } else {
+                //meet whitespace again
+                if (count != 0) {
+
+                }
+            }
+        }
+        return c0;
     }
 
     private static int exceptElementName(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
@@ -95,7 +134,7 @@ public class SmlNoMixParser {
         char c0;
         int model = 0;
         while (index < length) {
-            c0 = smlStr.charAt(index);
+            c0 = smlStr.charAt(index++);
             if (c0 == LEFT_PARENTHESIS) {
                 model = 1;
                 break;
@@ -111,12 +150,11 @@ public class SmlNoMixParser {
             if (!Character.isWhitespace(c0)) {
                 sb.append(c0);
             }
-            index++;
         }
 
         if (model == 0) {
             while (index < length) {
-                c0 = smlStr.charAt(index);
+                c0 = smlStr.charAt(index++);
                 if (c0 == LEFT_PARENTHESIS) {
                     model = 1;
                     break;
@@ -132,7 +170,6 @@ public class SmlNoMixParser {
                 if (!Character.isWhitespace(c0)) {
                     throw new SmlFormatException(EXCEPT_LEFT);
                 }
-                index++;
             }
         }
         indexHolder.setValue(index);
@@ -144,19 +181,6 @@ public class SmlNoMixParser {
         char c0 = 0;
         int count = 0;
         boolean hasEqualSign = false;
-        // find (
-        while (index < length) {
-            c0 = smlStr.charAt(index++);
-            if (c0 == LEFT_PARENTHESIS) {
-                break;
-            }
-            if (!Character.isWhitespace(c0)) {
-                throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
-            }
-        }
-        if (c0 != LEFT_PARENTHESIS) {
-            throw new SmlFormatException(EXCEPT_LEFT_PARENTHESIS);
-        }
         // loop find attribute
         attributeEnd:
         while (index < length) {
