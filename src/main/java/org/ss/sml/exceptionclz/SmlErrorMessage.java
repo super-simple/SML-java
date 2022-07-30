@@ -1,4 +1,4 @@
-package org.ss.json.exceptionclz;
+package org.ss.sml.exceptionclz;
 
 public interface SmlErrorMessage {
     String ERROR_ATTRIBUTE = "error attribute";

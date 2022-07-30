@@ -1,4 +1,4 @@
-package org.ss.json.parse;
+package org.ss.sml.parse;
 
 public interface SmlDelimiter {
     String SML = "sml";

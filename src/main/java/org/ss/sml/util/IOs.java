@@ -1,4 +1,4 @@
-package org.ss.json.util;
+package org.ss.sml.util;
 
 import java.io.*;
 import java.nio.charset.Charset;
