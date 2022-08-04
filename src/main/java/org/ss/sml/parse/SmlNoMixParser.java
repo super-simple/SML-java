@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.ss.sml.bo.MutableInt;
+import org.ss.sml.bo.TokenTrait;
 import org.ss.sml.exceptionclz.SmlBug;
 import org.ss.sml.exceptionclz.SmlErrorMessage;
 import org.ss.sml.exceptionclz.SmlFormatException;
@@ -14,6 +15,9 @@ import static org.ss.sml.exceptionclz.SmlErrorMessage.*;
 import static org.ss.sml.parse.SmlDelimiter.*;
 
 public class SmlNoMixParser {
+
+    private static final char[] KEYWORD = new char[]{'(', ')', '[', ']', '{', '}', '=', '"', '\'', '`', '\\'};
+
     private static final ObjectMapper OBJECT_MAPPER = ObjectMappers.getObjectMapper();
 
     public static JsonNode parse(String smlStr) {
@@ -76,6 +80,35 @@ public class SmlNoMixParser {
         indexHolder.setValue(index);
         exceptAttribute(smlStr, indexHolder, length, sb, objectNode);
         return objectNode;
+    }
+
+    private static char readContext(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, TokenTrait tokenTrait) {
+        int index = indexHolder.getValue();
+        char c0 = 0;
+        boolean hasSkipped = false;
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (!Character.isWhitespace(c0)) {
+                for (char keyword : KEYWORD) {
+                    if (c0 == keyword) {
+                        return c0;
+                    } else {
+                        sb.append(c0);
+                        if (!hasSkipped) {
+                            hasSkipped = true;
+                        }
+                    }
+                }
+            } else {
+                if (hasSkipped) {
+                    sb.append(c0);
+                    if (!tokenTrait.isContainWhitespace()) {
+                        tokenTrait.setContainWhitespace(true);
+                    }
+                }
+            }
+        }
+        return c0;
     }
 
     private static ObjectNode parseBody(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
