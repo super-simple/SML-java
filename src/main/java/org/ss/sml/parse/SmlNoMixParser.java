@@ -2,6 +2,7 @@ package org.ss.sml.parse;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.ss.sml.bo.MutableInt;
@@ -25,7 +26,7 @@ public class SmlNoMixParser {
         }
     }
 
-    public static ObjectNode doParse(String smlStr) {
+    public static JsonNode doParse(String smlStr) {
         if (smlStr == null || smlStr.isEmpty()) {
             return null;
         }
@@ -34,7 +35,7 @@ public class SmlNoMixParser {
         int length = smlStr.length();
         TokenTrait tokenTrait = new TokenTrait();
         ObjectNode headerAttribute = parseHeader(smlStr, indexHolder, length, sb);
-        return parseBody(smlStr, indexHolder, length, sb);
+        return parseBody(smlStr, indexHolder, length, sb, tokenTrait);
     }
 
     private static ObjectNode parseHeader(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
@@ -169,7 +170,7 @@ public class SmlNoMixParser {
             }
         }
         if (!isKeyword) {
-            throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT, index, c0);
+            throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_KEYWORD);
         }
     }
 
@@ -235,8 +236,49 @@ public class SmlNoMixParser {
         return c0;
     }
 
-    private static ObjectNode parseBody(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
-        return null;
+    private static JsonNode parseBody(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, TokenTrait tokenTrait) {
+        char c = readContext(smlStr, indexHolder, length, sb);
+        String rootName = sb.toString();
+        sb.delete(0, sb.length());
+        ObjectNode rootNode = OBJECT_MAPPER.createObjectNode();
+        JsonNode valueNode = null;
+        if (c == SmlDelimiter.LEFT_PARENTHESIS) {
+            valueNode = OBJECT_MAPPER.createObjectNode();
+            parseAttribute(smlStr, indexHolder, length, sb, (ObjectNode) valueNode);
+        }
+        int index = indexHolder.getValue();
+        if (index >= length) {
+            throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_LEFT_BRACE);
+        }
+        char c0 = 0;
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (!Character.isWhitespace(c0)) {
+                if (!(c0 == SmlDelimiter.LEFT_BRACE || c0 == SmlDelimiter.LEFT_BRACKET)) {
+                    throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT_BRACE_OR_BRACKET, index, c0);
+                }
+                break;
+            }
+        }
+        indexHolder.setValue(index);
+        if (c0 == SmlDelimiter.LEFT_BRACE) {
+            parseElement(smlStr, indexHolder, length, sb, (ObjectNode) valueNode, tokenTrait);
+        }
+        if (c0 == SmlDelimiter.LEFT_BRACKET) {
+            valueNode = parseArray(smlStr, indexHolder, length, sb);
+        }
+        rootNode.set(rootName, valueNode);
+        return rootNode;
+    }
+
+    private static void parseElement(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode valueNode, TokenTrait tokenTrait) {
+        char keyword = readContextGreedy(smlStr, indexHolder, length, sb, tokenTrait);
+
+    }
+
+    private static JsonNode parseArray(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+        ArrayNode arrayNode = OBJECT_MAPPER.createArrayNode();
+        return arrayNode;
     }
 
 }

@@ -5,12 +5,15 @@ public interface SmlErrorMessage {
 
     String NOT_START_WITH_SML = "not start with sml";
 
+    String EXCEPT_KEYWORD = "except keyword";
+
+    String EXCEPT_LEFT_BRACE_OR_BRACKET = "except left brace or left bracket";
     String EXCEPT_LEFT_PARENTHESIS = "except left parenthesis";
+
+    String EXCEPT_LEFT_BRACE = "except left brace";
     String EXCEPT_ATTRIBUTE_NAME = "except attribute name";
     String EXCEPT_ATTRIBUTE_VALUE = "except attribute value";
-
     String EXCEPT_ATTRIBUTE_VALUE_CONTEXT = "except attribute value context";
-    String EXCEPT_LEFT = "except left parenthesis or left brace";
     String EXCEPT_EQUAL = "except equal";
     String EXCEPT_QUOTE = "except quote";
 }
