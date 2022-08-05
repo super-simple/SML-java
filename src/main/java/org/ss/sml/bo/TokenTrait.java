@@ -1,7 +1,7 @@
 package org.ss.sml.bo;
 
 public class TokenTrait {
-    private boolean isContainWhitespace;
+    private boolean isContainWhitespace = false;
 
     public boolean isContainWhitespace() {
         return isContainWhitespace;
@@ -10,4 +10,5 @@ public class TokenTrait {
     public void setContainWhitespace(boolean containWhitespace) {
         isContainWhitespace = containWhitespace;
     }
+
 }
