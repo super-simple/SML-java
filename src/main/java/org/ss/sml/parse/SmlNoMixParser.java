@@ -3,11 +3,10 @@ package org.ss.sml.parse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.ss.sml.bo.MutableInt;
 import org.ss.sml.bo.TokenTrait;
-import org.ss.sml.exceptionclz.SmlBug;
-import org.ss.sml.exceptionclz.SmlErrorMessage;
-import org.ss.sml.exceptionclz.SmlFormatException;
+import org.ss.sml.exceptionclz.*;
 import org.ss.sml.util.ObjectMappers;
 
 public class SmlNoMixParser {
@@ -34,12 +33,87 @@ public class SmlNoMixParser {
         MutableInt indexHolder = new MutableInt(0);
         int length = smlStr.length();
         TokenTrait tokenTrait = new TokenTrait();
-        ObjectNode headerAttribute = parseHeader(smlStr, indexHolder, length, sb, tokenTrait);
+        ObjectNode headerAttribute = parseHeader(smlStr, indexHolder, length, sb);
         return parseBody(smlStr, indexHolder, length, sb);
     }
 
-    private static ObjectNode parseHeader(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, TokenTrait tokenTrait) {
-        return null;
+    private static ObjectNode parseHeader(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+        char keyword = readContext(smlStr, indexHolder, length, sb);
+        String sml = sb.toString();
+        int index = indexHolder.getValue();
+        if (SmlDelimiter.SML.compareTo(sml) != 0) {
+            throw new SmlErrorStartException(SmlErrorMessage.NOT_START_WITH_SML);
+        }
+        if (keyword != SmlDelimiter.LEFT_PARENTHESIS) {
+            throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT_PARENTHESIS, index, keyword);
+        }
+        if (index >= length) {
+            throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_NAME);
+        }
+        ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
+        parseAttribute(smlStr, indexHolder, length, sb, objectNode);
+        return objectNode;
+    }
+
+    private static void parseAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode objectNode) {
+        int index = indexHolder.getValue();
+        char c0 = 0;
+        while (index < length) {
+            // 找到属性名字,关键字结尾
+            char keyword = readContext(smlStr, indexHolder, length, sb);
+            index = indexHolder.getValue();
+            if (keyword == SmlDelimiter.LEFT_PARENTHESIS) {
+                break;
+            }
+            if (keyword != SmlDelimiter.EQUAL_SIGN) {
+                throw new SmlFormatException(SmlErrorMessage.EXCEPT_EQUAL, index, keyword);
+            }
+            if (index >= length) {
+                throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_VALUE);
+            }
+            //找到value
+            while (index < length) {
+                c0 = smlStr.charAt(index++);
+                if (!Character.isWhitespace(c0)) {
+                    if (!(c0 == SmlDelimiter.SINGLE_QUOTE || c0 == SmlDelimiter.DOUBLE_QUOTE)) {
+                        throw new SmlFormatException(SmlErrorMessage.EXCEPT_QUOTE, index, c0);
+                    }
+                    break;
+                }
+            }
+            String attributeName = sb.toString();
+            sb.delete(0, sb.length());
+            if (c0 == SmlDelimiter.SINGLE_QUOTE) {
+                if (index >= length) {
+                    throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_VALUE_CONTEXT);
+                }
+                while (index < length) {
+                    c0 = smlStr.charAt(index++);
+                    if (c0 != SmlDelimiter.SINGLE_QUOTE) {
+                        sb.append(c0);
+                    } else {
+                        break;
+                    }
+                }
+                continue;
+            }
+            if (c0 == SmlDelimiter.DOUBLE_QUOTE) {
+                if (index >= length) {
+                    throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_VALUE_CONTEXT);
+                }
+                while (index < length) {
+                    c0 = smlStr.charAt(index++);
+                    if (c0 != SmlDelimiter.DOUBLE_QUOTE) {
+                        sb.append(c0);
+                    } else {
+                        break;
+                    }
+                }
+            }
+            String attributeValue = sb.toString();
+            objectNode.set(attributeName, new TextNode(attributeValue));
+        }
+        indexHolder.setValue(index);
     }
 
     /**
@@ -68,7 +142,7 @@ public class SmlNoMixParser {
                     sb.append(c0);
                     count++;
                 } else {
-                    throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT);
+                    throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT, index, c0);
                 }
             } else {
                 if (count > 0) {
@@ -78,11 +152,12 @@ public class SmlNoMixParser {
                 }
             }
         }
-        keywordValidate(c0);
+        indexHolder.setValue(index);
+        keywordValidate(c0, index);
         return c0;
     }
 
-    private static void keywordValidate(char c0) {
+    private static void keywordValidate(char c0, int index) {
         boolean isKeyword = false;
         for (char c : KEYWORD) {
             if (c0 == c) {
@@ -91,7 +166,7 @@ public class SmlNoMixParser {
             }
         }
         if (!isKeyword) {
-            throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT);
+            throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT, index, c0);
         }
     }
 
@@ -143,7 +218,8 @@ public class SmlNoMixParser {
             int sbLength = sb.length();
             sb.delete(sbLength - notWsCount, sbLength);
         }
-        keywordValidate(c0);
+        indexHolder.setValue(index);
+        keywordValidate(c0, index);
         if (firstCharIsWhitespace) {
             if (transformCount >= 3) {
                 tokenTrait.setContainWhitespace(true);
@@ -158,10 +234,6 @@ public class SmlNoMixParser {
 
     private static ObjectNode parseBody(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         return null;
-    }
-
-    private void restTokenTrait(TokenTrait tokenTrait) {
-        tokenTrait.setContainWhitespace(false);
     }
 
 }
