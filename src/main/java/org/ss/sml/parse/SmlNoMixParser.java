@@ -40,6 +40,7 @@ public class SmlNoMixParser {
     private static ObjectNode parseHeader(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         char keyword = readContext(smlStr, indexHolder, length, sb);
         String sml = sb.toString();
+        sb.delete(0, sb.length());
         int index = indexHolder.getValue();
         if (SmlDelimiter.SML.compareTo(sml) != 0) {
             throw new SmlErrorStartException(SmlErrorMessage.NOT_START_WITH_SML);
@@ -51,6 +52,7 @@ public class SmlNoMixParser {
             throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_NAME);
         }
         ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
+        indexHolder.setValue(index);
         parseAttribute(smlStr, indexHolder, length, sb, objectNode);
         return objectNode;
     }
@@ -62,7 +64,7 @@ public class SmlNoMixParser {
             // 找到属性名字,关键字结尾
             char keyword = readContext(smlStr, indexHolder, length, sb);
             index = indexHolder.getValue();
-            if (keyword == SmlDelimiter.LEFT_PARENTHESIS) {
+            if (keyword == SmlDelimiter.RIGHT_PARENTHESIS) {
                 break;
             }
             if (keyword != SmlDelimiter.EQUAL_SIGN) {
@@ -111,7 +113,9 @@ public class SmlNoMixParser {
                 }
             }
             String attributeValue = sb.toString();
+            sb.delete(0, sb.length());
             objectNode.set(attributeName, new TextNode(attributeValue));
+            indexHolder.setValue(index);
         }
         indexHolder.setValue(index);
     }
@@ -130,19 +134,18 @@ public class SmlNoMixParser {
         char c0 = 0;
         int count = 0;
         boolean meetWhitespaceAgain = false;
+        context:
         while (index < length) {
             c0 = smlStr.charAt(index++);
             if (!Character.isWhitespace(c0)) {
                 for (char keyword : KEYWORD) {
                     if (c0 == keyword) {
-                        return c0;
+                        break context;
                     }
                 }
                 if (!meetWhitespaceAgain) {
                     sb.append(c0);
                     count++;
-                } else {
-                    throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT, index, c0);
                 }
             } else {
                 if (count > 0) {
