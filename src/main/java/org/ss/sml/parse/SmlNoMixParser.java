@@ -10,6 +10,8 @@ import org.ss.sml.bo.TokenTrait;
 import org.ss.sml.exceptionclz.*;
 import org.ss.sml.util.ObjectMappers;
 
+import static org.ss.sml.exceptionclz.SmlErrorMessage.CONTEXT_NODE_WITH_ATTRIBUTE;
+
 public class SmlNoMixParser {
 
     private static final char[] KEYWORD = new char[]{'(', ')', '[', ']', '{', '}', '=', '"', '\'', '`', '\\'};
@@ -52,15 +54,14 @@ public class SmlNoMixParser {
         if (index >= length) {
             throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_NAME);
         }
-        ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
         indexHolder.setValue(index);
-        parseAttribute(smlStr, indexHolder, length, sb, objectNode);
-        return objectNode;
+        return parseAttribute(smlStr, indexHolder, length, sb);
     }
 
-    private static void parseAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode objectNode) {
+    private static void parseAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
         char c0 = 0;
+        ObjectNode objectNode = null;
         while (index < length) {
             // 找到属性名字,关键字结尾
             char keyword = readContext(smlStr, indexHolder, length, sb);
@@ -98,9 +99,11 @@ public class SmlNoMixParser {
                         break;
                     }
                 }
-                continue;
-            }
-            if (c0 == SmlDelimiter.DOUBLE_QUOTE) {
+                if (c0 != SmlDelimiter.SINGLE_QUOTE) {
+                    throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_SINGLE_QUOTE);
+                }
+            } else {
+                //一定是双引号
                 if (index >= length) {
                     throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_VALUE_CONTEXT);
                 }
@@ -111,6 +114,9 @@ public class SmlNoMixParser {
                     } else {
                         break;
                     }
+                }
+                if (c0 != SmlDelimiter.DOUBLE_QUOTE) {
+                    throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_DOUBLE_QUOTE);
                 }
             }
             String attributeValue = sb.toString();
@@ -243,8 +249,7 @@ public class SmlNoMixParser {
         ObjectNode rootNode = OBJECT_MAPPER.createObjectNode();
         JsonNode valueNode = null;
         if (c == SmlDelimiter.LEFT_PARENTHESIS) {
-            valueNode = OBJECT_MAPPER.createObjectNode();
-            parseAttribute(smlStr, indexHolder, length, sb, (ObjectNode) valueNode);
+            valueNode = parseAttribute(smlStr, indexHolder, length, sb);
         }
         int index = indexHolder.getValue();
         if (index >= length) {
@@ -260,20 +265,54 @@ public class SmlNoMixParser {
                 break;
             }
         }
+        if (index >= length) {
+            throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_LEFT_BRACE_OR_BRACKET);
+        }
         indexHolder.setValue(index);
         if (c0 == SmlDelimiter.LEFT_BRACE) {
-            parseElement(smlStr, indexHolder, length, sb, (ObjectNode) valueNode, tokenTrait);
-        }
-        if (c0 == SmlDelimiter.LEFT_BRACKET) {
+            parseElement(smlStr, indexHolder, length, sb, valueNode, tokenTrait);
+        } else {
+            //一定是 [
             valueNode = parseArray(smlStr, indexHolder, length, sb);
         }
         rootNode.set(rootName, valueNode);
         return rootNode;
     }
 
-    private static void parseElement(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode valueNode, TokenTrait tokenTrait) {
-        char keyword = readContextGreedy(smlStr, indexHolder, length, sb, tokenTrait);
+    private static JsonNode parseElement(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, JsonNode valueNode, TokenTrait tokenTrait) {
+        int index = indexHolder.getValue();
+        JsonNode result = null;
+        while (index < length) {
+            char keyword = readContextGreedy(smlStr, indexHolder, length, sb, tokenTrait);
+            String greedyContext = sb.toString();
+            sb.delete(0, sb.length());
+            tokenTrait.setContainWhitespace(false);
+            index = indexHolder.getValue();
+            boolean containWhitespace = tokenTrait.isContainWhitespace();
+            //如果包含空格,那么只可能是文本类型
+            if (containWhitespace) {
+                if (keyword != SmlDelimiter.RIGHT_BRACE) {
+                    throw new SmlFormatException(SmlErrorMessage.EXCEPT_RIGHT_BRACE, index, keyword);
+                }
+                if (valueNode == null) {
+                    result = new TextNode(greedyContext);
+                } else {
+                    throw new SmlFormatException(CONTEXT_NODE_WITH_ATTRIBUTE, index, keyword);
+                }
+                break;
+            } else {
+                if (keyword == SmlDelimiter.LEFT_PARENTHESIS) {
+                    parseAttribute()
+                } else if (keyword == SmlDelimiter.LEFT_BRACE) {
 
+                } else if (keyword == SmlDelimiter.LEFT_BRACKET) {
+
+                } else {
+
+                }
+            }
+        }
+        return result;
     }
 
     private static JsonNode parseArray(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
