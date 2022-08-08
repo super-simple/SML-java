@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.ss.sml.bo.MutableInt;
-import org.ss.sml.bo.TokenTrait;
 import org.ss.sml.exceptionclz.*;
 import org.ss.sml.util.ObjectMappers;
 
@@ -33,9 +32,8 @@ public class SmlNoMixParser {
         StringBuilder sb = new StringBuilder();
         MutableInt indexHolder = new MutableInt(0);
         int length = smlStr.length();
-        TokenTrait tokenTrait = new TokenTrait();
-        ObjectNode headerAttribute = parseHeader(smlStr, indexHolder, length, sb);
-        return parseBody(smlStr, indexHolder, length, sb, tokenTrait);
+        ObjectNode metaAttribute = parseHeader(smlStr, indexHolder, length, sb);
+        return parseBody(smlStr, indexHolder, length, sb);
     }
 
     private static ObjectNode parseHeader(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
@@ -175,36 +173,35 @@ public class SmlNoMixParser {
      * @param indexHolder
      * @param length
      * @param sb
-     * @param tokenTrait
      * @return
      */
-    private static char readContextGreedy(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, TokenTrait tokenTrait) {
+    private static char readContextGreedy(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
-        char c0;
-        int wsCount = 0;
+        char c0 = 0;
+        boolean inWhitespace = true;
         int notWsCount = 0;
         int transformCount = 0;
         //减少循环里面的判断
-        c0 = smlStr.charAt(index);
-        boolean firstCharIsWhitespace = Character.isWhitespace(c0);
         context:
         while (index < length) {
             c0 = smlStr.charAt(index++);
             if (!Character.isWhitespace(c0)) {
-                if (notWsCount != 0) {
-                    notWsCount = 0;
-                    transformCount++;
-                }
                 for (char keyword : KEYWORD) {
                     if (c0 == keyword) {
                         break context;
                     }
                 }
+                if (notWsCount != 0) {
+                    notWsCount = 0;
+                    transformCount++;
+                }
                 sb.append(c0);
-                wsCount++;
+                if (inWhitespace) {
+                    inWhitespace = false;
+                }
             } else {
-                if (wsCount != 0) {
-                    wsCount = 0;
+                if (!inWhitespace) {
+                    inWhitespace = true;
                     transformCount++;
                 }
                 notWsCount++;
@@ -213,20 +210,11 @@ public class SmlNoMixParser {
                 }
             }
         }
-        if (notWsCount > 0) {
-            int sbLength = sb.length();
+        int sbLength = sb.length();
+        if (sbLength > 0 && notWsCount > 0) {
             sb.delete(sbLength - notWsCount, sbLength);
         }
         keywordValidate(c0);
-        if (firstCharIsWhitespace) {
-            if (transformCount >= 3) {
-                tokenTrait.setContainWhitespace(true);
-            }
-        } else {
-            if (transformCount >= 2) {
-                tokenTrait.setContainWhitespace(true);
-            }
-        }
         indexHolder.setValue(index);
         return c0;
     }
@@ -250,7 +238,7 @@ public class SmlNoMixParser {
         return c0;
     }
 
-    private static JsonNode parseBody(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, TokenTrait tokenTrait) {
+    private static JsonNode parseBody(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         char keyword = readContext(smlStr, indexHolder, length, sb);
         int sbLength = sb.length();
         int index = indexHolder.getValue();
@@ -274,7 +262,7 @@ public class SmlNoMixParser {
             throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_LEFT_BRACE_OR_BRACKET);
         }
         if (keyword == SmlDelimiter.LEFT_BRACE) {
-            result = parseElement(smlStr, indexHolder, length, sb, valueNode, tokenTrait);
+            result = parseElement(smlStr, indexHolder, length, sb, valueNode);
         } else {
             //一定是 [
             if (valueNode != null) {
@@ -292,16 +280,15 @@ public class SmlNoMixParser {
      * @param length
      * @param sb
      * @param valueNode   如果是一个对象,返回的是valueNode本身,如果是一个文本,那么传入的valueNode一定是空,
-     * @param tokenTrait
      * @return
      */
-    private static JsonNode parseElement(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode valueNode, TokenTrait tokenTrait) {
+    private static JsonNode parseElement(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode valueNode) {
         int index = indexHolder.getValue();
         JsonNode result = null;
         char keyword = 0;
         int elementCount = 0;
         while (index < length) {
-            keyword = readContextGreedy(smlStr, indexHolder, length, sb, tokenTrait);
+            keyword = readContextGreedy(smlStr, indexHolder, length, sb);
             //结束条件
             if (keyword == SmlDelimiter.RIGHT_BRACE) {
                 //表明这是个单元素节点
@@ -355,7 +342,7 @@ public class SmlNoMixParser {
                 }
 
                 if (keyword == SmlDelimiter.LEFT_BRACE) {
-                    elementValue = parseElement(smlStr, indexHolder, length, sb, nextValueNode, tokenTrait);
+                    elementValue = parseElement(smlStr, indexHolder, length, sb, nextValueNode);
                 } else {
                     elementValue = parseArray(smlStr, indexHolder, length, sb);
                 }
