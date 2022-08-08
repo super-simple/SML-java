@@ -58,7 +58,7 @@ public class SmlNoMixParser {
 
     private static ObjectNode parseAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
-        char c0 = 0;
+        char c0;
         ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
         while (index < length) {
             // 找到属性名字,关键字结尾
@@ -73,57 +73,46 @@ public class SmlNoMixParser {
             if (index >= length) {
                 throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_VALUE);
             }
-            //找到value
-            while (index < length) {
-                c0 = smlStr.charAt(index++);
-                if (!Character.isWhitespace(c0)) {
-                    if (!(c0 == SmlDelimiter.SINGLE_QUOTE || c0 == SmlDelimiter.DOUBLE_QUOTE)) {
-                        throw new SmlFormatException(SmlErrorMessage.EXCEPT_QUOTE, index, c0);
-                    }
-                    break;
-                }
-            }
+            c0 = findKeywordInDouble(smlStr, indexHolder, length, SmlDelimiter.SINGLE_QUOTE, SmlDelimiter.DOUBLE_QUOTE, SmlErrorMessage.EXCEPT_QUOTE);
+            index = indexHolder.getValue();
             String attributeName = sb.toString();
             sb.delete(0, sb.length());
             if (c0 == SmlDelimiter.SINGLE_QUOTE) {
                 if (index >= length) {
                     throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_VALUE_CONTEXT);
                 }
-                while (index < length) {
-                    c0 = smlStr.charAt(index++);
-                    if (c0 != SmlDelimiter.SINGLE_QUOTE) {
-                        sb.append(c0);
-                    } else {
-                        break;
-                    }
-                }
-                if (c0 != SmlDelimiter.SINGLE_QUOTE) {
-                    throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_SINGLE_QUOTE);
-                }
+                readGreedyByKeyword(smlStr, indexHolder, length, sb, SmlDelimiter.SINGLE_QUOTE, SmlErrorMessage.EXCEPT_SINGLE_QUOTE);
             } else {
                 //一定是双引号
                 if (index >= length) {
                     throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_VALUE_CONTEXT);
                 }
-                while (index < length) {
-                    c0 = smlStr.charAt(index++);
-                    if (c0 != SmlDelimiter.DOUBLE_QUOTE) {
-                        sb.append(c0);
-                    } else {
-                        break;
-                    }
-                }
-                if (c0 != SmlDelimiter.DOUBLE_QUOTE) {
-                    throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_DOUBLE_QUOTE);
-                }
+                readGreedyByKeyword(smlStr, indexHolder, length, sb, SmlDelimiter.DOUBLE_QUOTE, SmlErrorMessage.EXCEPT_DOUBLE_QUOTE);
             }
             String attributeValue = sb.toString();
             sb.delete(0, sb.length());
             objectNode.set(attributeName, new TextNode(attributeValue));
-            indexHolder.setValue(index);
+            index = indexHolder.getValue();
         }
         indexHolder.setValue(index);
         return objectNode;
+    }
+
+    private static void readGreedyByKeyword(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, char c1, String errorMsg) {
+        int index = indexHolder.getValue();
+        char c0 = 0;
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (c0 != c1) {
+                sb.append(c0);
+            } else {
+                break;
+            }
+        }
+        if (c0 != c1) {
+            throw new SmlErrorEndException(errorMsg);
+        }
+        indexHolder.setValue(index);
     }
 
     /**
@@ -162,11 +151,11 @@ public class SmlNoMixParser {
             }
         }
         indexHolder.setValue(index);
-        keywordValidate(c0, index);
+        keywordValidate(c0);
         return c0;
     }
 
-    private static void keywordValidate(char c0, int index) {
+    private static void keywordValidate(char c0) {
         boolean isKeyword = false;
         for (char c : KEYWORD) {
             if (c0 == c) {
@@ -198,17 +187,18 @@ public class SmlNoMixParser {
         //减少循环里面的判断
         c0 = smlStr.charAt(index);
         boolean firstCharIsWhitespace = Character.isWhitespace(c0);
+        context:
         while (index < length) {
             c0 = smlStr.charAt(index++);
             if (!Character.isWhitespace(c0)) {
-                for (char keyword : KEYWORD) {
-                    if (c0 == keyword) {
-                        return c0;
-                    }
-                }
                 if (notWsCount != 0) {
                     notWsCount = 0;
                     transformCount++;
+                }
+                for (char keyword : KEYWORD) {
+                    if (c0 == keyword) {
+                        break context;
+                    }
                 }
                 sb.append(c0);
                 wsCount++;
@@ -227,8 +217,7 @@ public class SmlNoMixParser {
             int sbLength = sb.length();
             sb.delete(sbLength - notWsCount, sbLength);
         }
-        indexHolder.setValue(index);
-        keywordValidate(c0, index);
+        keywordValidate(c0);
         if (firstCharIsWhitespace) {
             if (transformCount >= 3) {
                 tokenTrait.setContainWhitespace(true);
@@ -238,6 +227,7 @@ public class SmlNoMixParser {
                 tokenTrait.setContainWhitespace(true);
             }
         }
+        indexHolder.setValue(index);
         return c0;
     }
 
@@ -270,7 +260,8 @@ public class SmlNoMixParser {
         String rootName = sb.toString();
         sb.delete(0, sbLength);
         ObjectNode rootNode = OBJECT_MAPPER.createObjectNode();
-        JsonNode valueNode = null;
+        JsonNode result;
+        ObjectNode valueNode = null;
         if (keyword == SmlDelimiter.LEFT_PARENTHESIS) {
             valueNode = parseAttribute(smlStr, indexHolder, length, sb);
         }
@@ -282,17 +273,16 @@ public class SmlNoMixParser {
         if (index >= length) {
             throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_LEFT_BRACE_OR_BRACKET);
         }
-        indexHolder.setValue(index);
         if (keyword == SmlDelimiter.LEFT_BRACE) {
-            valueNode = parseElement(smlStr, indexHolder, length, sb, valueNode, tokenTrait);
+            result = parseElement(smlStr, indexHolder, length, sb, valueNode, tokenTrait);
         } else {
             //一定是 [
             if (valueNode != null) {
                 throw new SmlErrorEndException(SmlErrorMessage.ARRAY_NODE_WITH_ATTRIBUTE);
             }
-            valueNode = parseArray(smlStr, indexHolder, length, sb);
+            result = parseArray(smlStr, indexHolder, length, sb);
         }
-        rootNode.set(rootName, valueNode);
+        rootNode.set(rootName, result);
         return rootNode;
     }
 
@@ -305,36 +295,83 @@ public class SmlNoMixParser {
      * @param tokenTrait
      * @return
      */
-    private static JsonNode parseElement(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, JsonNode valueNode, TokenTrait tokenTrait) {
+    private static JsonNode parseElement(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, ObjectNode valueNode, TokenTrait tokenTrait) {
         int index = indexHolder.getValue();
         JsonNode result = null;
+        char keyword = 0;
+        int elementCount = 0;
         while (index < length) {
-            char keyword = readContextGreedy(smlStr, indexHolder, length, sb, tokenTrait);
-            int sbLength = sb.length();
+            keyword = readContextGreedy(smlStr, indexHolder, length, sb, tokenTrait);
             //结束条件
             if (keyword == SmlDelimiter.RIGHT_BRACE) {
-                if (sbLength == 0) {
-                    result = OBJECT_MAPPER.nullNode();
+                //表明这是个单元素节点
+                int sbLength = sb.length();
+                if (elementCount == 0) {
+                    index = indexHolder.getValue();
+                    if (valueNode != null) {
+                        throw new SmlFormatException(SmlErrorMessage.CONTEXT_NODE_WITH_ATTRIBUTE, index, keyword);
+                    }
+                    if (sbLength == 0) {
+                        result = OBJECT_MAPPER.nullNode();
+                    } else {
+                        String context = sb.toString();
+                        sb.delete(0, sbLength);
+                        result = new TextNode(context);
+                    }
+                    break;
                 } else {
-                    String context = sb.toString();
-                    result = new TextNode(context);
+                    if (sb.length() != 0) {
+                        throw new SmlFormatException(SmlErrorMessage.NO_MIXED, index, keyword);
+                    } else {
+                        break;
+                    }
                 }
-                break;
             }
+            index = indexHolder.getValue();
+            if (index >= length) {
+                throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_LEFT);
+            }
+
+            String elementName = sb.toString();
+            sb.delete(0, sb.length());
+
             ObjectNode nextValueNode = null;
             if (keyword == SmlDelimiter.LEFT_PARENTHESIS) {
                 nextValueNode = parseAttribute(smlStr, indexHolder, length, sb);
+                keyword = findKeywordInDouble(smlStr, indexHolder, length, SmlDelimiter.LEFT_BRACE, SmlDelimiter.LEFT_BRACKET, SmlErrorMessage.EXCEPT_LEFT_BRACE_OR_BRACKET);
+                index = indexHolder.getValue();
+                if (index >= length) {
+                    throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_LEFT_BRACE_OR_BRACKET);
+                }
             }
 
-            if (keyword == SmlDelimiter.LEFT_BRACE) {
+            JsonNode elementValue;
+            if (keyword == SmlDelimiter.LEFT_BRACE || keyword == SmlDelimiter.LEFT_BRACKET) {
                 if (valueNode == null) {
                     valueNode = OBJECT_MAPPER.createObjectNode();
                     result = valueNode;
+                } else {
+                    result = valueNode;
                 }
-            } else if (keyword == SmlDelimiter.LEFT_BRACKET) {
-                result = parseArray(smlStr, indexHolder, length, sb);
+
+                if (keyword == SmlDelimiter.LEFT_BRACE) {
+                    elementValue = parseElement(smlStr, indexHolder, length, sb, nextValueNode, tokenTrait);
+                } else {
+                    elementValue = parseArray(smlStr, indexHolder, length, sb);
+                }
+
+                valueNode.set(elementName, elementValue);
+            } else {
+                index = indexHolder.getValue();
+                throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT_OR_RIGHT_BRACE, index, keyword);
             }
+            index = indexHolder.getValue();
+            elementCount++;
         }
+        if (keyword != SmlDelimiter.RIGHT_BRACE) {
+            throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_RIGHT_BRACE);
+        }
+        indexHolder.setValue(index);
         return result;
     }
 

@@ -14,7 +14,17 @@ public class BasicTest1 {
     void test1() throws IOException {
         String smlStr;
         try (InputStream resourceAsStream = BasicTest1.class.getResourceAsStream("/basic/simple1.sml")) {
-            smlStr = IOs.toString(BasicTest1.class.getResourceAsStream("/basic/simple1.sml"), StandardCharsets.UTF_8);
+            smlStr = IOs.toString(resourceAsStream, StandardCharsets.UTF_8);
+        }
+        JsonNode parse = SmlNoMixParser.parse(smlStr);
+        System.out.println(parse);
+    }
+
+    @Test
+    void test2() throws IOException {
+        String smlStr;
+        try (InputStream resourceAsStream = BasicTest1.class.getResourceAsStream("/basic/simple2.sml")) {
+            smlStr = IOs.toString(resourceAsStream, StandardCharsets.UTF_8);
         }
         JsonNode parse = SmlNoMixParser.parse(smlStr);
         System.out.println(parse);

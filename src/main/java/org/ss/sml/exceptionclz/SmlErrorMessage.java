@@ -8,12 +8,14 @@ public interface SmlErrorMessage {
     String EXCEPT_KEYWORD = "except keyword";
 
     //left
+    String EXCEPT_LEFT = "except left";
+    String EXCEPT_LEFT_OR_RIGHT_BRACE = "except left or right brace";
+    String EXCEPT_RIGHT_BRACE = "except right brace";
     String EXCEPT_LEFT_BRACE_OR_BRACKET = "except left brace or left bracket";
     String EXCEPT_LEFT_PARENTHESIS = "except left parenthesis";
     String EXCEPT_LEFT_BRACE = "except left brace";
 
     //right
-    String EXCEPT_RIGHT_BRACE = "except right brace";
 
     String EXCEPT_ATTRIBUTE_NAME = "except attribute name";
     String EXCEPT_ATTRIBUTE_VALUE = "except attribute value";
@@ -28,4 +30,6 @@ public interface SmlErrorMessage {
     // 结构错误
     String CONTEXT_NODE_WITH_ATTRIBUTE = "context node can not with attribute";
     String ARRAY_NODE_WITH_ATTRIBUTE = "array node can not with attribute";
+
+    String NO_MIXED = "no mixed";
 }
