@@ -3,6 +3,8 @@ package org.ss.sml.exceptionclz;
 public interface SmlErrorMessage {
     String NOT_START_WITH_SML = "not start with sml";
 
+    String EMPTY_ROOT_NAME = "empty root name";
+
     String EXCEPT_KEYWORD = "except keyword";
 
     //left
@@ -25,4 +27,5 @@ public interface SmlErrorMessage {
 
     // 结构错误
     String CONTEXT_NODE_WITH_ATTRIBUTE = "context node can not with attribute";
+    String ARRAY_NODE_WITH_ATTRIBUTE = "array node can not with attribute";
 }
