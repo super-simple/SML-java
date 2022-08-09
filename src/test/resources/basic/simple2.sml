@@ -15,7 +15,7 @@
 						GlossSeeAlso["GML","XML"]
                     }
 					GlossSee("markup")
-					adsa["dasd","dada","dasd",123,321312,{},{aa(123)}]
+					adsa["das  d" "da  da" "dasd" 123 321312 {} {aa(123)}]
                 }
             }
         }
