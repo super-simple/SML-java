@@ -115,6 +115,45 @@ public class SmlDataParser {
         return c0;
     }
 
+    /**
+     * 在数组中读取元素,遇到关键字和空白字符停止
+     *
+     * @param smlStr
+     * @param indexHolder
+     * @param length
+     * @param sb
+     * @return
+     */
+    private static char readContextInArray(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+        int index = indexHolder.getValue();
+        char c0 = 0;
+        int count = 0;
+        int mode = 0;
+        context:
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (!Character.isWhitespace(c0)) {
+                for (char keyword : KEYWORD) {
+                    if (c0 == keyword) {
+                        mode = 2;
+                        break context;
+                    }
+                }
+                sb.append(c0);
+                count++;
+            } else {
+                if (count > 0) {
+                    mode = 1;
+                    break;
+                }
+            }
+        }
+        if (mode == 0) {
+            throw new SmlFormatException(SmlErrorMessage.EXCEPT_KEYWORD_OR_WHITESPACE, index, c0);
+        }
+        indexHolder.setValue(index);
+        return c0;
+    }
 
     private static JsonNode parseRoot(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         char keyword = readKeyword(smlStr, indexHolder, length);
@@ -148,29 +187,7 @@ public class SmlDataParser {
                 } else {
                     String context = sb.toString();
                     sb.delete(0, contextLength);
-                    switch (context) {
-                        case SmlKeyword.nullString: {
-                            result = NullNode.getInstance();
-                            break;
-                        }
-                        case SmlKeyword.trueString: {
-                            result = BooleanNode.TRUE;
-                            break;
-                        }
-                        case SmlKeyword.falseString: {
-                            result = BooleanNode.FALSE;
-                            break;
-                        }
-                        default: {
-                            //todo 完善具体的逻辑
-                            if (context.indexOf(SmlDelimiter.DOT) >= 0) {
-                                result = DoubleNode.valueOf(Double.parseDouble(context));
-                            } else {
-                                result = IntNode.valueOf(Integer.parseInt(context));
-                            }
-                        }
-                    }
-
+                    result = parseNotStringContext(context);
                 }
                 break;
             }
@@ -180,7 +197,7 @@ public class SmlDataParser {
                 if (index >= length) {
                     throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_ATTRIBUTE_VALUE);
                 }
-                consumeString(smlStr, indexHolder, length, sb, keyword);
+                consumeString(smlStr, indexHolder, length, sb, keyword, SmlErrorMessage.EXCEPT_QUOTE);
                 index = indexHolder.getValue();
                 if (index >= length) {
                     throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_RIGHT_PARENTHESIS);
@@ -207,9 +224,36 @@ public class SmlDataParser {
         return result;
     }
 
-    private static void consumeString(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, char untilChar) {
+    private static JsonNode parseNotStringContext(String context) {
+        JsonNode result;
+        switch (context) {
+            case SmlKeyword.nullString: {
+                result = NullNode.getInstance();
+                break;
+            }
+            case SmlKeyword.trueString: {
+                result = BooleanNode.TRUE;
+                break;
+            }
+            case SmlKeyword.falseString: {
+                result = BooleanNode.FALSE;
+                break;
+            }
+            default: {
+                //todo 完善具体的逻辑
+                if (context.indexOf(SmlDelimiter.DOT) >= 0) {
+                    result = DoubleNode.valueOf(Double.parseDouble(context));
+                } else {
+                    result = IntNode.valueOf(Integer.parseInt(context));
+                }
+            }
+        }
+        return result;
+    }
+
+    private static void consumeString(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, char untilChar, String errorMsg) {
         int index = indexHolder.getValue();
-        char c0;
+        char c0 = 0;
         while (index < length) {
             c0 = smlStr.charAt(index++);
             if (c0 != untilChar) {
@@ -217,6 +261,9 @@ public class SmlDataParser {
             } else {
                 break;
             }
+        }
+        if (c0 != untilChar) {
+            throw new SmlErrorEndException(errorMsg);
         }
         indexHolder.setValue(index);
     }
@@ -260,7 +307,53 @@ public class SmlDataParser {
     }
 
     private static ArrayNode parseArray(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
-        return null;
+        int index = indexHolder.getValue();
+        ArrayNode result = OBJECT_MAPPER.createArrayNode();
+        char keywordOrWhitespace;
+        topLoop:
+        while (index < length) {
+            keywordOrWhitespace = readContextInArray(smlStr, indexHolder, length, sb);
+            index = indexHolder.getValue();
+            switch (keywordOrWhitespace) {
+                case SmlDelimiter.RIGHT_BRACKET: {
+                    int sbLength = sb.length();
+                    if (sbLength > 0) {
+                        String context = sb.toString();
+                        sb.delete(0, sbLength);
+                        JsonNode jsonNode = parseNotStringContext(context);
+                        result.add(jsonNode);
+                    }
+                    break topLoop;
+                }
+                case SmlDelimiter.SINGLE_QUOTE: {
+                }
+                case SmlDelimiter.DOUBLE_QUOTE: {
+                    if (index >= length) {
+                        throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_CONTEXT);
+                    }
+                    consumeString(smlStr, indexHolder, length, sb, keywordOrWhitespace, SmlErrorMessage.EXCEPT_QUOTE);
+                    index = indexHolder.getValue();
+                    if (index >= length) {
+                        throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_RIGHT_BRACKET);
+                    }
+                    break;
+                }
+                case SmlDelimiter.LEFT_BRACE: {
+                    result.add(parseObject(smlStr, indexHolder, length, sb));
+                    break;
+                }
+                case SmlDelimiter.LEFT_BRACKET: {
+                    result.add(parseArray(smlStr, indexHolder, length, sb));
+                    break;
+                }
+                default: {
+                    if (Character.isWhitespace(keywordOrWhitespace)) {
+
+                    }
+                }
+            }
+        }
+        return result;
     }
 
 }

@@ -6,6 +6,7 @@ public interface SmlErrorMessage {
     String EMPTY_ROOT_NAME = "empty root name";
 
     String EXCEPT_KEYWORD = "except keyword";
+    String EXCEPT_KEYWORD_OR_WHITESPACE = "except keyword or whitespace";
 
     String EXCEPT_CONTEXT = "except context";
 
@@ -13,6 +14,7 @@ public interface SmlErrorMessage {
     String EXCEPT_LEFT = "except left";
     String EXCEPT_LEFT_OR_RIGHT_BRACE = "except left or right brace";
     String EXCEPT_RIGHT_BRACE = "except right brace";
+    String EXCEPT_RIGHT_BRACKET = "except right bracket";
     String EXCEPT_RIGHT_PARENTHESIS = "except right parenthesis";
     String EXCEPT_LEFT_BRACE_OR_BRACKET = "except left brace or left bracket";
     String EXCEPT_LEFT_PARENTHESIS = "except left parenthesis";
