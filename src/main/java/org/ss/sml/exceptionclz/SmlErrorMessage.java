@@ -37,4 +37,7 @@ public interface SmlErrorMessage {
     String ARRAY_NODE_WITH_ATTRIBUTE = "array node can not with attribute";
 
     String NO_MIXED = "no mixed";
+
+    //error
+    String ERROR_KEYWORD = "error keyword";
 }

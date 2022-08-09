@@ -336,6 +336,9 @@ public class SmlDataParser {
                     if (index >= length) {
                         throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_RIGHT_BRACKET);
                     }
+                    String text = sb.toString();
+                    sb.delete(0, sb.length());
+                    result.add(new TextNode(text));
                     break;
                 }
                 case SmlDelimiter.LEFT_BRACE: {
@@ -348,7 +351,11 @@ public class SmlDataParser {
                 }
                 default: {
                     if (Character.isWhitespace(keywordOrWhitespace)) {
-
+                        String context = sb.toString();
+                        sb.delete(0, sb.length());
+                        result.add(parseNotStringContext(context));
+                    } else {
+                        throw new SmlFormatException(SmlErrorMessage.ERROR_KEYWORD, indexHolder.getValue(), keywordOrWhitespace);
                     }
                 }
             }
