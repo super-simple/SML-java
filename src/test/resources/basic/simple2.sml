@@ -1,9 +1,23 @@
- sml (aa="aaa" bb = "bb bb")
- document(foo1="bar1" bar1="foo1"){
-     aa{  11 232 1  }
-     bb{12 12  }
-     cc(foo2="bar2" bar2="foo2"){
-        dd{  123}
-        ee{1234}
-     }
- }
+{
+    glossary{
+        title("example glossary")
+		GlossDiv{
+            title("S")
+			GlossList{
+                GlossEntry{
+                    ID("SGML")
+					SortAs("SGML")
+					GlossTerm("Standard Generalized Markup Language")
+					Acronym("SGML")
+					Abbrev("ISO 8879:1986")
+					GlossDef{
+                        para("A meta-markup language, used to create markup languages such as DocBook.")
+						GlossSeeAlso["GML","XML"]
+                    }
+					GlossSee("markup")
+					adsa["dasd","dada","dasd",123,321312,{},{aa(123)}]
+                }
+            }
+        }
+    }
+}

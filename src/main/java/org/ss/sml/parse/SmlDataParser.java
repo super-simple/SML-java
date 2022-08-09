@@ -9,7 +9,7 @@ import org.ss.sml.bo.MutableInt;
 import org.ss.sml.exceptionclz.*;
 import org.ss.sml.util.ObjectMappers;
 
-public class SmlNoMixParser {
+public class SmlDataParser {
 
     private static final char[] KEYWORD = new char[]{'(', ')', '[', ']', '{', '}', '=', '"', '\'', '`', '\\'};
 
@@ -37,7 +37,7 @@ public class SmlNoMixParser {
     }
 
     private static ObjectNode parseHeader(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
-        char keyword = readContext(smlStr, indexHolder, length, sb);
+        char keyword = readName(smlStr, indexHolder, length, sb);
         String sml = sb.toString();
         sb.delete(0, sb.length());
         int index = indexHolder.getValue();
@@ -60,7 +60,7 @@ public class SmlNoMixParser {
         ObjectNode objectNode = OBJECT_MAPPER.createObjectNode();
         while (index < length) {
             // 找到属性名字,关键字结尾
-            char keyword = readContext(smlStr, indexHolder, length, sb);
+            char keyword = readName(smlStr, indexHolder, length, sb);
             index = indexHolder.getValue();
             if (keyword == SmlDelimiter.RIGHT_PARENTHESIS) {
                 break;
@@ -122,7 +122,7 @@ public class SmlNoMixParser {
      * @param sb
      * @return
      */
-    private static char readContext(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+    private static char readName(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
         char c0 = 0;
         int count = 0;
@@ -153,6 +153,40 @@ public class SmlNoMixParser {
         return c0;
     }
 
+    /**
+     * 在数组中读取元素,遇到关键字和空白字符停止
+     *
+     * @param smlStr
+     * @param indexHolder
+     * @param length
+     * @param sb
+     * @return
+     */
+    private static char readContextInArray(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+        int index = indexHolder.getValue();
+        char c0 = 0;
+        int count = 0;
+        context:
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (!Character.isWhitespace(c0)) {
+                for (char keyword : KEYWORD) {
+                    if (c0 == keyword) {
+                        break context;
+                    }
+                }
+                sb.append(c0);
+                count++;
+            } else {
+                if (count > 0) {
+                    break;
+                }
+            }
+        }
+        indexHolder.setValue(index);
+        return c0;
+    }
+
     private static void keywordValidate(char c0) {
         boolean isKeyword = false;
         for (char c : KEYWORD) {
@@ -175,7 +209,7 @@ public class SmlNoMixParser {
      * @param sb
      * @return
      */
-    private static char readContextGreedy(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+    private static char readContextGreedyInElement(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
         char c0 = 0;
         boolean inWhitespace = true;
@@ -239,7 +273,7 @@ public class SmlNoMixParser {
     }
 
     private static JsonNode parseBody(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
-        char keyword = readContext(smlStr, indexHolder, length, sb);
+        char keyword = readName(smlStr, indexHolder, length, sb);
         int sbLength = sb.length();
         int index = indexHolder.getValue();
         if (sbLength == 0) {
@@ -288,7 +322,7 @@ public class SmlNoMixParser {
         char keyword = 0;
         int elementCount = 0;
         while (index < length) {
-            keyword = readContextGreedy(smlStr, indexHolder, length, sb);
+            keyword = readContextGreedyInElement(smlStr, indexHolder, length, sb);
             //结束条件
             if (keyword == SmlDelimiter.RIGHT_BRACE) {
                 //表明这是个单元素节点
@@ -363,7 +397,47 @@ public class SmlNoMixParser {
     }
 
     private static JsonNode parseArray(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
+        int index = indexHolder.getValue();
         ArrayNode arrayNode = OBJECT_MAPPER.createArrayNode();
+        char keywordOrWhitespace;
+        loop:
+        while (index < length) {
+            keywordOrWhitespace = readContextInArray(smlStr, indexHolder, length, sb);
+            switch (keywordOrWhitespace) {
+                case SmlDelimiter.RIGHT_BRACKET: {
+                    int sbLength = sb.length();
+                    if (sbLength != 0) {
+                        String context = sb.toString();
+                        sb.delete(0, sbLength);
+                        arrayNode.add(context);
+                    }
+                    break loop;
+                }
+                case SmlDelimiter.LEFT_BRACE: {
+                    int sbLength = sb.length();
+                    if (sbLength > 0) {
+
+                    } else {
+
+                    }
+                    break;
+                }
+                case SmlDelimiter.LEFT_BRACKET: {
+
+                }
+                default: {
+                    if (Character.isWhitespace(keywordOrWhitespace)) {
+                        String context = sb.toString();
+                        arrayNode.add(context);
+                    } else {
+                        index = indexHolder.getValue();
+                        throw new SmlFormatException(SmlErrorMessage.EXCEPT_KEYWORD, index, keywordOrWhitespace);
+                    }
+                }
+            }
+            index = indexHolder.getValue();
+        }
+        indexHolder.setValue(index);
         return arrayNode;
     }
 
