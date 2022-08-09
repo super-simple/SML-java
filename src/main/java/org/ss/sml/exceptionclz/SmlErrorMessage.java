@@ -7,10 +7,13 @@ public interface SmlErrorMessage {
 
     String EXCEPT_KEYWORD = "except keyword";
 
+    String EXCEPT_CONTEXT = "except context";
+
     //left
     String EXCEPT_LEFT = "except left";
     String EXCEPT_LEFT_OR_RIGHT_BRACE = "except left or right brace";
     String EXCEPT_RIGHT_BRACE = "except right brace";
+    String EXCEPT_RIGHT_PARENTHESIS = "except right parenthesis";
     String EXCEPT_LEFT_BRACE_OR_BRACKET = "except left brace or left bracket";
     String EXCEPT_LEFT_PARENTHESIS = "except left parenthesis";
     String EXCEPT_LEFT_BRACE = "except left brace";

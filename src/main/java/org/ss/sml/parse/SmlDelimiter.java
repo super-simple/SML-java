@@ -1,7 +1,6 @@
 package org.ss.sml.parse;
 
 public interface SmlDelimiter {
-    String SML = "sml";
 
     char LEFT_PARENTHESIS = '(';
     char RIGHT_PARENTHESIS = ')';
@@ -16,6 +15,9 @@ public interface SmlDelimiter {
     char BACK_QUOTE = '`';
 
     char ESCAPE = '\\';
+
+    //保留,暂时不用
+    char DOT = '.';
 
     char SLASH = '/';
 

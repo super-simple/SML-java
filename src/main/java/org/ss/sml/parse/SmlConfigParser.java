@@ -41,7 +41,7 @@ public class SmlConfigParser {
         String sml = sb.toString();
         sb.delete(0, sb.length());
         int index = indexHolder.getValue();
-        if (SmlDelimiter.SML.compareTo(sml) != 0) {
+        if (SmlKeyword.SML.compareTo(sml) != 0) {
             throw new SmlErrorStartException(SmlErrorMessage.NOT_START_WITH_SML);
         }
         if (keyword != SmlDelimiter.LEFT_PARENTHESIS) {
