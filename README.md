@@ -2,7 +2,7 @@
 
 sml java implementation
 
-Sml is a variant of xml, which provides one more choice.
+Sml is a variant of xml,the letter s means simple, which provides one more choice.
 The syntax of sml imitates C series languages,
 which is more friendly, modern, convenient, and completely equivalent to xml
 
