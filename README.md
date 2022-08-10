@@ -12,7 +12,7 @@ more like xml,no mixed,but sml's style
 
 1. only deserialization
 
-```sml
+```text
 sml() // keep for extend
 doucment(foo="bar1" bar=123){ //object have attribute and root element have element name
     h1(123)
@@ -37,7 +37,7 @@ more like json,no mixed,no attribute,but sml's style
 1. deserialization
 2. Serialization
 
-```sml
+```text
 {
     attributeSimpleNode1("string") //simple attribute with (
     attributeContainerNode1{ //container attribute with {
