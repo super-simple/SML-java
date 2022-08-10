@@ -38,7 +38,7 @@ doucment(foo="bar1" bar=123){ //object have attribute and root element have elem
 }
 ```
 
-### 数据模式
+### data model
 
 more like json,no mixed,no attribute,but sml's style
 
