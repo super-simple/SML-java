@@ -1,6 +1,14 @@
-# ss-java
+# sml-java
 
 sml java implementation
+
+Sml is a variant of xml, which provides one more choice.
+The syntax of sml imitates C series languages,
+which is more friendly, modern, convenient, and completely equivalent to xml
+
+This repository provides java implementation of sml based on sml specification,
+only implement data mode and configuration mode,
+and does not provide support for document mode
 
 [SML-specification](https://github.com/super-simple/SML-specification)
 
