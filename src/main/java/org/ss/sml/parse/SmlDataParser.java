@@ -30,7 +30,7 @@ public class SmlDataParser {
         }
     }
 
-    public static JsonNode doParse(String smlStr) {
+    private static JsonNode doParse(String smlStr) {
         if (smlStr == null || smlStr.isEmpty()) {
             return null;
         }
