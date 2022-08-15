@@ -13,11 +13,6 @@ import org.ss.sml.util.ObjectMappers;
 public class SmlDataParser {
 
     private static final char[] KEYWORD = new char[]{'(', ')', '[', ']', '{', '}', '=', '"', '\'', '`', '\\'};
-
-    private static final char[] OTHER_KEYWORD = new char[]{'(', ')', '[', ']', '{', '}', '=', '\\'};
-
-    private static final char[] STRING_KEYWORD = new char[]{'"', '\'', '`'};
-
     private static final ObjectMapper OBJECT_MAPPER = ObjectMappers.getObjectMapper();
 
     public static JsonNode parse(String smlStr) {

@@ -45,6 +45,11 @@ more like json,no mixed,no attribute,but sml's style
 1. deserialization
 2. Serialization
 
+```java
+    SmlObjectReader smlObjectReader=new SmlObjectReaderImpl();
+        Map map=smlObjectReader.readSml(smlStr,Map.class);
+```
+
 ```text
 {
     attributeSimpleNode1("string") //simple attribute with (
