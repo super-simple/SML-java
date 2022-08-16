@@ -10,11 +10,29 @@ import org.ss.sml.exceptionclz.SmlErrorMessage;
 import org.ss.sml.exceptionclz.SmlFormatException;
 import org.ss.sml.util.ObjectMappers;
 
+/**
+ * sml数据格式下的字符串解析,最终解析成jackson的jsonNode
+ * <p>
+ * 线程安全
+ */
 public class SmlDataParser {
 
+    /**
+     * sml的关键字集合,用于遍历,匹配是否是关键字
+     */
     private static final char[] KEYWORD = new char[]{'(', ')', '[', ']', '{', '}', '=', '"', '\'', '`', '\\'};
+
+    /**
+     * jackson的objectMapper,用于创建arrayNode和objectNode
+     */
     private static final ObjectMapper OBJECT_MAPPER = ObjectMappers.getObjectMapper();
 
+    /**
+     * 把sml字符串的内容读取以后,转换成jackson的jsonNode模型
+     *
+     * @param smlStr sml内容字符串
+     * @return jackson的jsonNode模型
+     */
     public static JsonNode parse(String smlStr) {
         try {
             return doParse(smlStr);
@@ -25,6 +43,12 @@ public class SmlDataParser {
         }
     }
 
+    /**
+     * 准备执行parse前的动作,里面的逻辑主要是做校验和初始化
+     *
+     * @param smlStr
+     * @return
+     */
     private static JsonNode doParse(String smlStr) {
         if (smlStr == null || smlStr.isEmpty()) {
             return null;
@@ -48,6 +72,14 @@ public class SmlDataParser {
         }
     }
 
+    /**
+     * 读取到关键字,忽略前面的空白字符,如果前面出现非关键字,非空白字符,则会抛出异常
+     *
+     * @param smlStr      sml字符串
+     * @param indexHolder 读取到的字符位置char数组下标
+     * @param length      sml字符串的长度
+     * @return
+     */
     private static char readKeyword(String smlStr, MutableInt indexHolder, int length) {
         int index = indexHolder.getValue();
         char c0 = 0;
@@ -150,6 +182,13 @@ public class SmlDataParser {
         return c0;
     }
 
+    /**
+     * @param smlStr
+     * @param indexHolder
+     * @param length
+     * @param sb
+     * @return
+     */
     private static JsonNode parseRoot(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         char keyword = readKeyword(smlStr, indexHolder, length);
         JsonNode rootNode;
