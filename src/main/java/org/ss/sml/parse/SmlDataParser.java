@@ -59,6 +59,11 @@ public class SmlDataParser {
         return parseRoot(smlStr, indexHolder, length, sb);
     }
 
+    /**
+     * 检测该字符是不是关键字,如果不是关键字,直接抛异常
+     *
+     * @param c0 期望是关键字
+     */
     private static void keywordValidate(char c0) {
         boolean isKeyword = false;
         for (char c : KEYWORD) {
@@ -101,12 +106,12 @@ public class SmlDataParser {
     }
 
     /**
-     * 排除两边的空格,遇到关键字停止
+     * 排除两边的空格,读取中间的字符串,遇到关键字停止
      *
-     * @param smlStr
-     * @param indexHolder
-     * @param length
-     * @param sb
+     * @param smlStr      sml字符串
+     * @param indexHolder 读取到的字符位置char数组下标
+     * @param length      sml字符串的长度
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是情况的
      * @return
      */
     private static char readContext(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
@@ -145,9 +150,9 @@ public class SmlDataParser {
     /**
      * 在数组中读取元素,遇到关键字和空白字符停止
      *
-     * @param smlStr
-     * @param indexHolder
-     * @param length
+     * @param smlStr      sml字符串
+     * @param indexHolder 读取到的字符位置char数组下标
+     * @param length      sml字符串的长度
      * @param sb
      * @return
      */
@@ -183,24 +188,28 @@ public class SmlDataParser {
     }
 
     /**
-     * @param smlStr
-     * @param indexHolder
-     * @param length
-     * @param sb
+     * @param smlStr      sml字符串
+     * @param indexHolder 读取到的字符位置char数组下标
+     * @param length      sml字符串的长度
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是情况的
      * @return
      */
     private static JsonNode parseRoot(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         char keyword = readKeyword(smlStr, indexHolder, length);
         JsonNode rootNode;
         int index = indexHolder.getValue();
+        //检测是否达到文件末尾
         if (index >= length) {
             throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_CONTEXT);
         }
+
+        //检测是对象开头,还是数组开头
         if (keyword == SmlDelimiter.LEFT_BRACE) {
             rootNode = parseObject(smlStr, indexHolder, length, sb);
         } else if (keyword == SmlDelimiter.LEFT_BRACKET) {
             rootNode = parseArray(smlStr, indexHolder, length, sb);
         } else {
+            //既不是对象,也不是数组,关键字不合法
             throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT_BRACE_OR_BRACKET, indexHolder.getValue(), keyword);
         }
         return rootNode;
@@ -302,6 +311,15 @@ public class SmlDataParser {
         indexHolder.setValue(index);
     }
 
+    /**
+     * 读取对象的内容
+     *
+     * @param smlStr      sml字符串
+     * @param indexHolder 读取到的字符位置char数组下标
+     * @param length      sml字符串的长度
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是情况的
+     * @return
+     */
     private static ObjectNode parseObject(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
         ObjectNode result = OBJECT_MAPPER.createObjectNode();
