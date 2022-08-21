@@ -111,7 +111,7 @@ public class SmlDataParser {
      * @param smlStr      sml字符串
      * @param indexHolder 读取到的字符位置char数组下标
      * @param length      sml字符串的长度
-     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是情况的
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是清空的
      * @return
      */
     private static char readContext(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
@@ -148,19 +148,19 @@ public class SmlDataParser {
     }
 
     /**
-     * 在数组中读取元素,遇到关键字和空白字符停止
+     * 在数组中读取元素,遇到关键字和空白字符停止,跳过前面的空白字符
      *
      * @param smlStr      sml字符串
      * @param indexHolder 读取到的字符位置char数组下标
      * @param length      sml字符串的长度
-     * @param sb
-     * @return
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是清空的
+     * @return 关键字或者空白字符
      */
     private static char readContextInArray(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
         char c0 = 0;
         int count = 0;
-        int mode = 0;
+        int mode = 0; //0表明没有读取到任何内容,1表明以空白字符串结尾,2表明关键字结尾
         context:
         while (index < length) {
             c0 = smlStr.charAt(index++);
@@ -188,10 +188,12 @@ public class SmlDataParser {
     }
 
     /**
+     * 读取根元素,根元素可能是对象或者数组
+     *
      * @param smlStr      sml字符串
      * @param indexHolder 读取到的字符位置char数组下标
      * @param length      sml字符串的长度
-     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是情况的
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是清空的
      * @return
      */
     private static JsonNode parseRoot(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
@@ -215,6 +217,15 @@ public class SmlDataParser {
         return rootNode;
     }
 
+    /**
+     * 读取属性的内容,支持sml的各种非容器型数据类型
+     *
+     * @param smlStr      sml字符串
+     * @param indexHolder 读取到的字符位置char数组下标
+     * @param length      sml字符串的长度
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是清空的
+     * @return
+     */
     private static JsonNode parseAttribute(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         char keyword = readContext(smlStr, indexHolder, length, sb);
         int index = indexHolder.getValue();
@@ -246,7 +257,6 @@ public class SmlDataParser {
                     throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_RIGHT_PARENTHESIS);
                 }
                 keyword = readKeyword(smlStr, indexHolder, length);
-                index = indexHolder.getValue();
                 if (keyword == SmlDelimiter.RIGHT_PARENTHESIS) {
                     String context = sb.toString();
                     sb.delete(0, sb.length());
@@ -254,12 +264,8 @@ public class SmlDataParser {
                 } else {
                     throw new SmlFormatException(SmlErrorMessage.EXCEPT_RIGHT_PARENTHESIS, indexHolder.getValue(), keyword);
                 }
-                if (index >= length) {
-                    throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_RIGHT_BRACE);
-                }
                 break;
             }
-            //todo 完善支持其它string类型
             default: {
                 throw new SmlFormatException(SmlErrorMessage.EXCEPT_CONTEXT, indexHolder.getValue(), keyword);
             }
@@ -267,6 +273,12 @@ public class SmlDataParser {
         return result;
     }
 
+    /**
+     * 解析非字符串的数据类型
+     *
+     * @param context 待解析的字符串
+     * @return
+     */
     private static JsonNode parseNotStringContext(String context) {
         JsonNode result;
         switch (context) {
@@ -294,6 +306,16 @@ public class SmlDataParser {
         return result;
     }
 
+    /**
+     * 读取字符串内容
+     *
+     * @param smlStr      sml字符串
+     * @param indexHolder 读取到的字符位置char数组下标
+     * @param length      sml字符串的长度
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是清空的
+     * @param untilChar   停止的关键字
+     * @param errorMsg    错误信息
+     */
     private static void consumeString(String smlStr, MutableInt indexHolder, int length, StringBuilder sb, char untilChar, String errorMsg) {
         int index = indexHolder.getValue();
         char c0 = 0;
@@ -317,7 +339,7 @@ public class SmlDataParser {
      * @param smlStr      sml字符串
      * @param indexHolder 读取到的字符位置char数组下标
      * @param length      sml字符串的长度
-     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是情况的
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是清空的
      * @return
      */
     private static ObjectNode parseObject(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
@@ -358,6 +380,15 @@ public class SmlDataParser {
         return result;
     }
 
+    /**
+     * 读取数组的内容
+     *
+     * @param smlStr      sml字符串
+     * @param indexHolder 读取到的字符位置char数组下标
+     * @param length      sml字符串的长度
+     * @param sb          读去字符串内容,循环使用,确保下次使用前,内容都是清空的
+     * @return
+     */
     private static ArrayNode parseArray(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
         ArrayNode result = OBJECT_MAPPER.createArrayNode();
@@ -410,6 +441,10 @@ public class SmlDataParser {
                         throw new SmlFormatException(SmlErrorMessage.ERROR_KEYWORD, indexHolder.getValue(), keywordOrWhitespace);
                     }
                 }
+            }
+            index = indexHolder.getValue();
+            if (index >= length) {
+                throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_RIGHT_BRACKET);
             }
         }
         return result;
