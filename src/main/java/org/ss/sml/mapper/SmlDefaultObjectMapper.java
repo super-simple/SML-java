@@ -7,8 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ss.sml.parse.SmlDataParser;
 import org.ss.sml.util.ObjectMappers;
 
-public class SmlObjectReaderImpl implements SmlObjectReader {
-
+public class SmlDefaultObjectMapper implements SmlObjectMapper {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMappers.getObjectMapper();
 
     @Override
@@ -29,5 +28,15 @@ public class SmlObjectReaderImpl implements SmlObjectReader {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public String writeMiniSml(Object object) {
+        return null;
+    }
+
+    @Override
+    public String writePrettySml(Object object) {
+        return null;
     }
 }
