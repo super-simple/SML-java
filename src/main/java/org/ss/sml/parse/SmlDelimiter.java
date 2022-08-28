@@ -25,4 +25,6 @@ public interface SmlDelimiter {
 
     char CR = '\r';
     char LF = '\n';
+
+    char SPACE = ' ';
 }

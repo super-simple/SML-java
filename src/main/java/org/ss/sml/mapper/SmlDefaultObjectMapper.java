@@ -10,6 +10,8 @@ import org.ss.sml.util.ObjectMappers;
 public class SmlDefaultObjectMapper implements SmlObjectMapper {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMappers.getObjectMapper();
 
+    private final SmlObjectMiniWriter miniWriter = new SmlObjectMiniWriter();
+
     @Override
     public <T> T readSml(String smlStr, Class<T> clz) {
         try {
@@ -32,7 +34,8 @@ public class SmlDefaultObjectMapper implements SmlObjectMapper {
 
     @Override
     public String writeMiniSml(Object object) {
-        return null;
+        JsonNode jsonNode = OBJECT_MAPPER.valueToTree(object);
+        return miniWriter.write(jsonNode);
     }
 
     @Override
