@@ -35,4 +35,16 @@ public class SmlObjectReaderBasicTest {
         String s = smlObjectReader.writeMiniSml(map);
         System.out.println(s);
     }
+
+    @Test
+    void test3() throws IOException {
+        String smlStr;
+        try (InputStream resourceAsStream = BasicTest1.class.getResourceAsStream("/basic/simple2.sml")) {
+            smlStr = IOs.toString(resourceAsStream, StandardCharsets.UTF_8);
+        }
+        SmlDefaultObjectMapper smlObjectReader = new SmlDefaultObjectMapper();
+        Map map = smlObjectReader.readSml(smlStr, Map.class);
+        String s = smlObjectReader.writePrettySml(map);
+        System.out.println(s);
+    }
 }

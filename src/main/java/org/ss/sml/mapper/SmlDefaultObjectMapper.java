@@ -11,6 +11,7 @@ public class SmlDefaultObjectMapper implements SmlObjectMapper {
     private static final ObjectMapper OBJECT_MAPPER = ObjectMappers.getObjectMapper();
 
     private final SmlObjectMiniWriter miniWriter = new SmlObjectMiniWriter();
+    private final SmlObjectPrettyWriter prettyWriter = new SmlObjectPrettyWriter();
 
     @Override
     public <T> T readSml(String smlStr, Class<T> clz) {
@@ -40,6 +41,7 @@ public class SmlDefaultObjectMapper implements SmlObjectMapper {
 
     @Override
     public String writePrettySml(Object object) {
-        return null;
+        JsonNode jsonNode = OBJECT_MAPPER.valueToTree(object);
+        return prettyWriter.write(jsonNode);
     }
 }
