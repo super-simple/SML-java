@@ -15,7 +15,7 @@ import org.ss.sml.util.ObjectMappers;
  * <p>
  * 线程安全
  */
-public class SmlDataParser {
+public class SmlConfigurationParser {
 
     /**
      * sml的关键字集合,用于遍历,匹配是否是关键字

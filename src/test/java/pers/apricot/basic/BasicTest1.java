@@ -18,7 +18,7 @@ public class BasicTest1 {
     @Test
     void test1() throws IOException {
         String smlStr;
-        try (InputStream resourceAsStream = BasicTest1.class.getResourceAsStream("/basic/simple2.sml")) {
+        try (InputStream resourceAsStream = BasicTest1.class.getResourceAsStream("/basic/data1.sml")) {
             smlStr = IOs.toString(resourceAsStream, StandardCharsets.UTF_8);
         }
         JsonNode parse = SmlDataParser.parse(smlStr);
