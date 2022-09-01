@@ -56,7 +56,9 @@ public class SmlDataParser {
         StringBuilder sb = new StringBuilder();
         MutableInt indexHolder = new MutableInt(0);
         int length = smlStr.length();
-        return parseRoot(smlStr, indexHolder, length, sb);
+        JsonNode jsonNode = parseRoot(smlStr, indexHolder, length, sb);
+
+        return jsonNode;
     }
 
     /**
@@ -197,22 +199,31 @@ public class SmlDataParser {
      * @return
      */
     private static JsonNode parseRoot(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
-        char keyword = readKeyword(smlStr, indexHolder, length);
-        JsonNode rootNode;
         int index = indexHolder.getValue();
+        char c0;
+        char firstChar = 0;
+        while (index < length) {
+            c0 = smlStr.charAt(index++);
+            if (!Character.isWhitespace(c0)) {
+                firstChar = c0;
+                break;
+            }
+        }
+
+        JsonNode rootNode;
         //检测是否达到文件末尾
         if (index >= length) {
             throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_CONTEXT);
         }
 
         //检测是对象开头,还是数组开头
-        if (keyword == SmlDelimiter.LEFT_BRACE) {
+        if (firstChar == SmlDelimiter.LEFT_BRACE) {
             rootNode = parseObject(smlStr, indexHolder, length, sb);
-        } else if (keyword == SmlDelimiter.LEFT_BRACKET) {
+        } else if (firstChar == SmlDelimiter.LEFT_BRACKET) {
             rootNode = parseArray(smlStr, indexHolder, length, sb);
         } else {
-            //既不是对象,也不是数组,关键字不合法
-            throw new SmlFormatException(SmlErrorMessage.EXCEPT_LEFT_BRACE_OR_BRACKET, indexHolder.getValue(), keyword);
+            //有可能是普通的value
+            rootNode = null;
         }
         return rootNode;
     }
