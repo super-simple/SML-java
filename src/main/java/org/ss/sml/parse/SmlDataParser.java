@@ -57,7 +57,7 @@ public class SmlDataParser {
         MutableInt indexHolder = new MutableInt(0);
         int length = smlStr.length();
         JsonNode jsonNode = parseRoot(smlStr, indexHolder, length, sb);
-
+        //尾部检测
         return jsonNode;
     }
 
@@ -200,7 +200,7 @@ public class SmlDataParser {
      */
     private static JsonNode parseRoot(String smlStr, MutableInt indexHolder, int length, StringBuilder sb) {
         int index = indexHolder.getValue();
-        char c0;
+        char c0 = 0;
         char firstChar = 0;
         while (index < length) {
             c0 = smlStr.charAt(index++);
@@ -210,20 +210,76 @@ public class SmlDataParser {
             }
         }
 
-        JsonNode rootNode;
         //检测是否达到文件末尾
         if (index >= length) {
             throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_CONTEXT);
         }
 
+        JsonNode rootNode;
         //检测是对象开头,还是数组开头
         if (firstChar == SmlDelimiter.LEFT_BRACE) {
             rootNode = parseObject(smlStr, indexHolder, length, sb);
         } else if (firstChar == SmlDelimiter.LEFT_BRACKET) {
             rootNode = parseArray(smlStr, indexHolder, length, sb);
+        } else if (firstChar == SmlDelimiter.SINGLE_QUOTE || firstChar == SmlDelimiter.DOUBLE_QUOTE) {
+
+            consumeString(smlStr, indexHolder, length, sb, firstChar, SmlErrorMessage.EXCEPT_QUOTE);
+            index = indexHolder.getValue();
+            if (index >= length) {
+                throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_RIGHT_PARENTHESIS);
+            }
+            char keyword = readKeyword(smlStr, indexHolder, length);
+            if (keyword == SmlDelimiter.RIGHT_PARENTHESIS) {
+                String context = sb.toString();
+                sb.delete(0, sb.length());
+                rootNode = new TextNode(context);
+            } else {
+                throw new SmlFormatException(SmlErrorMessage.EXCEPT_RIGHT_PARENTHESIS, indexHolder.getValue(), keyword);
+            }
         } else {
-            //有可能是普通的value
-            rootNode = null;
+
+            //判断是不是其它的关键字
+            boolean isKeyword = false;
+            for (char c : KEYWORD) {
+                if (firstChar == c) {
+                    isKeyword = true;
+                    break;
+                }
+            }
+            if (isKeyword) {
+                throw new SmlFormatException(SmlErrorMessage.ERROR_KEYWORD, index, firstChar);
+            }
+
+            //有可能是普通的value,回退
+            index--;
+
+            int count = 0;
+            int mode = 0; //1表明以空白字符串结尾,2表明关键字结尾
+            context:
+            while (index < length) {
+                c0 = smlStr.charAt(index++);
+                if (!Character.isWhitespace(c0)) {
+                    for (char keyword : KEYWORD) {
+                        if (c0 == keyword) {
+                            mode = 2;
+                            break context;
+                        }
+                    }
+                    sb.append(c0);
+                    count++;
+                } else {
+                    if (count > 0) {
+                        mode = 1;
+                        break;
+                    }
+                }
+            }
+            if (mode == 2) {
+                throw new SmlFormatException(SmlErrorMessage.ERROR_KEYWORD, index, c0);
+            }
+            String context = sb.toString();
+            sb.delete(0, count);
+            rootNode = parseNotStringContext(context);
         }
         return rootNode;
     }
