@@ -190,7 +190,7 @@ public class SmlDataParser {
     }
 
     /**
-     * 读取根元素,根元素可能是对象或者数组
+     * 读取根元素,根元素可能是对象或者数组,也可能是基本值
      *
      * @param smlStr      sml字符串
      * @param indexHolder 读取到的字符位置char数组下标
@@ -209,7 +209,7 @@ public class SmlDataParser {
                 break;
             }
         }
-
+        indexHolder.setValue(index);
         //检测是否达到文件末尾
         if (index >= length) {
             throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_CONTEXT);
@@ -222,20 +222,10 @@ public class SmlDataParser {
         } else if (firstChar == SmlDelimiter.LEFT_BRACKET) {
             rootNode = parseArray(smlStr, indexHolder, length, sb);
         } else if (firstChar == SmlDelimiter.SINGLE_QUOTE || firstChar == SmlDelimiter.DOUBLE_QUOTE) {
-
             consumeString(smlStr, indexHolder, length, sb, firstChar, SmlErrorMessage.EXCEPT_QUOTE);
-            index = indexHolder.getValue();
-            if (index >= length) {
-                throw new SmlErrorEndException(SmlErrorMessage.EXCEPT_RIGHT_PARENTHESIS);
-            }
-            char keyword = readKeyword(smlStr, indexHolder, length);
-            if (keyword == SmlDelimiter.RIGHT_PARENTHESIS) {
-                String context = sb.toString();
-                sb.delete(0, sb.length());
-                rootNode = new TextNode(context);
-            } else {
-                throw new SmlFormatException(SmlErrorMessage.EXCEPT_RIGHT_PARENTHESIS, indexHolder.getValue(), keyword);
-            }
+            String context = sb.toString();
+            sb.delete(0, sb.length());
+            rootNode = new TextNode(context);
         } else {
 
             //判断是不是其它的关键字
